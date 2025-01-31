@@ -12,8 +12,6 @@ const ButtonWallet = () => {
         authenticationStatus,
         mounted,
       }) => {
-        // Note: If your app doesn't use authentication, you
-        // can remove all 'authenticationStatus' checks
         const ready = mounted && authenticationStatus !== "loading";
         const connected =
           ready &&
@@ -38,7 +36,7 @@ const ButtonWallet = () => {
                   <button
                     onClick={openConnectModal}
                     type="button"
-                    className="w-full h-10 px-6 py-2 text-lg text-black bg-primary rounded-lg shadow-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300"
+                    className="w-full h-12 px-8 py-3 text-xl text-white bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl shadow-lg hover:from-blue-600 hover:to-indigo-600 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300"
                   >
                     CONNECT WALLET
                   </button>
@@ -50,7 +48,7 @@ const ButtonWallet = () => {
                   <button
                     onClick={openChainModal}
                     type="button"
-                    className="w-full h-10 px-6 py-2 text-lg text-white bg-red-600 rounded-lg shadow-lg hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-300"
+                    className="w-full h-12 px-8 py-3 text-xl text-white bg-gradient-to-r from-red-500 to-red-700 rounded-xl shadow-lg hover:from-red-600 hover:to-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 transition-all duration-300"
                   >
                     WRONG NETWORK
                   </button>
@@ -58,15 +56,15 @@ const ButtonWallet = () => {
               }
 
               return (
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-6">
                   <button
                     onClick={openChainModal}
                     type="button"
-                    className="flex items-center space-x-2 text-lg text-white bg-gray-700 rounded-lg px-4 py-2 shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-300"
+                    className="flex items-center space-x-3 text-xl text-white bg-gray-700 rounded-xl px-6 py-3 shadow-lg hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-400 transition-all duration-300"
                   >
                     {chain.hasIcon && (
                       <div
-                        className="w-6 h-6 rounded-full overflow-hidden mr-2"
+                        className="w-8 h-8 rounded-full overflow-hidden mr-3"
                         style={{ background: chain.iconBackground }}
                       >
                         {chain.iconUrl && (
@@ -78,13 +76,13 @@ const ButtonWallet = () => {
                         )}
                       </div>
                     )}
-                    <span>{chain.name}</span>
+                    <span className="text-lg font-medium">{chain.name}</span>
                   </button>
 
                   <button
                     onClick={openAccountModal}
                     type="button"
-                    className="text-lg text-white bg-gray-800 rounded-lg px-4 py-2 shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-300"
+                    className="text-xl text-white bg-gray-800 rounded-xl px-6 py-3 shadow-lg hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-400 transition-all duration-300"
                   >
                     {account.displayName}
                     {account.displayBalance
