@@ -1,9 +1,9 @@
 "use client";
+import MintNFTModal from "@/components/MintNFTModal";
 import ParticleBackground from "@/components/ParticleBackground";
 import { METADATA_TRAITS } from "@/constants/metadata";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Dices } from "lucide-react";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 
 type TraitType =
@@ -30,11 +30,12 @@ export default function Home() {
     "Speciality",
     "Hand",
   ];
+
   const [activeTraits, setActiveTraits] = useState<TraitType>("Backdrop");
   const [listTraits, setListTraits] = useState<string[]>([]);
   const [isHoveringPreview, setIsHoveringPreview] = useState(false);
   const [selectedTraits, setSelectedTraits] = useState<SelectedTraits>({
-    Backdrop: "Ash Grey.png",
+    Backdrop: "",
     Body: "",
     Clothing: "",
     Eyes: "",
@@ -77,6 +78,111 @@ export default function Home() {
     }));
   };
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleOpenModal = (): void => {
+    setIsModalOpen(true);
+  };
+
+  const handleDownloadImage = async (name: string): Promise<void> => {
+    const imageName = `${name.replace(/\s+/g, "_")}.png`;
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+      console.error("Could not get canvas context");
+      return;
+    }
+
+    canvas.width = 1000;
+    canvas.height = 1000;
+
+    for (const trait of traits) {
+      if (selectedTraits[trait]) {
+        try {
+          await new Promise<void>((resolve, reject) => {
+            const img = document.createElement("img") as HTMLImageElement;
+
+            img.onload = () => {
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              resolve();
+            };
+
+            img.onerror = () =>
+              reject(new Error(`Failed to load image for trait ${trait}`));
+
+            // Check if it's a custom uploaded image
+            if (selectedTraits[trait].startsWith("custom-")) {
+              const dataUrl = localStorage.getItem(selectedTraits[trait]);
+              img.src = dataUrl || "";
+            } else {
+              img.src = `/assets/${trait}/${selectedTraits[trait]}`;
+            }
+          });
+        } catch (error) {
+          console.error(`Error loading image for trait ${trait}:`, error);
+        }
+      }
+    }
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        console.error("Could not create blob from canvas");
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = imageName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, "image/png");
+  };
+
+  const handleDownloadMetadata = (name: string, description: string): void => {
+    const metadataName = `${name.replace(/\s+/g, "_")}.json`;
+
+    const metadata = {
+      name,
+      description,
+      image: "ipfs://your-image-hash", // Ganti dengan CID IPFS atau path gambar
+      attributes: traits.map((trait) => ({
+        trait_type: trait,
+        value: selectedTraits[trait] || "None",
+      })),
+    };
+
+    const blob = new Blob([JSON.stringify(metadata, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = metadataName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const [previewImage, setPreviewImage] = useState<string[]>([]);
+  useEffect(() => {
+    const previewImages = traits
+      .map((trait) => {
+        if (!selectedTraits[trait]) return null;
+        return selectedTraits[trait].startsWith("custom-")
+          ? localStorage.getItem(selectedTraits[trait]) || ""
+          : `/assets/${trait}/${selectedTraits[trait]}`;
+      })
+      .filter((src) => src !== null) as string[];
+
+    // Menyimpan semua gambar dalam state previewImage
+    setPreviewImage(previewImages);
+  }, [selectedTraits]); // Update ketika selectedTraits berubah
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:bg-gradient-to-br dark:from-gray-900 dark:to-blue-900 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -111,39 +217,65 @@ export default function Home() {
                   </button>
                 ))}
               </div>
-              {/* Mobile Trait Selector */}
-              <div className="md:hidden block space-y-1.5 mt-4 mb-6">
+              {/* Mobile Trait Selector - Modern Elegant */}
+              <div className="md:hidden block mt-5 mb-6 space-y-2.5">
                 <label
                   htmlFor="mobile-trait-select"
-                  className="text-xs font-semibold text-gray-600 uppercase tracking-wide"
+                  className="text-[13px] font-semibold text-gray-700/90 uppercase tracking-wider flex items-center"
                 >
-                  Select Character Trait
+                  <span className="bg-gradient-to-r from-indigo-600/20 to-blue-400/20 px-2 py-1.5 rounded-l-md border-l-4 border-indigo-500/80 mr-2">
+                    CHARACTER TRAIT
+                  </span>
                 </label>
-                <select
-                  id="mobile-trait-select"
-                  onChange={(e) => setActiveTraits(e.target.value as TraitType)}
-                  value={activeTraits}
-                  className="
-      w-full px-4 py-3.5
-      text-base text-gray-900 
-      bg-white border-2 border-gray-200 
-      rounded-lg shadow-sm
-      focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2
-      hover:border-blue-200
-      transition-all duration-200 ease-out
-      cursor-pointer
-    "
-                >
-                  {traits.map((item) => (
-                    <option
-                      key={item}
-                      value={item}
-                      className="text-sm font-medium text-gray-700 py-2"
+
+                <div className="relative group">
+                  <select
+                    id="mobile-trait-select"
+                    onChange={(e) =>
+                      setActiveTraits(e.target.value as TraitType)
+                    }
+                    value={activeTraits}
+                    className="
+        w-full pl-5 pr-12 py-3.5
+        text-[15px] font-medium text-gray-800
+        bg-white border border-gray-300/80
+        rounded-xl
+        shadow-sm
+        focus:outline-none focus:ring-2 focus:ring-indigo-500/80 focus:ring-offset-1
+        hover:border-indigo-400/90
+        transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
+        cursor-pointer
+        appearance-none
+      "
+                  >
+                    {traits.map((item) => (
+                      <option
+                        key={item}
+                        value={item}
+                        className="text-sm font-medium text-gray-700 py-2.5 checked:bg-indigo-50"
+                      >
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Custom Chevron */}
+                  <div className="absolute right-4 top-1/2 -translate-y-1/5 pointer-events-none">
+                    <svg
+                      className="w-5 h-5 text-gray-500/90 group-hover:text-indigo-600 transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      {item}
-                    </option>
-                  ))}
-                </select>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               {/* Traits Grid */}
@@ -221,9 +353,18 @@ export default function Home() {
                 Randomize
               </button>
 
-              <button className="w-full sm:w-auto flex items-center justify-center h-12 px-8 bg-gradient-to-r from-blue-400 to-purple-500 rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all text-white font-semibold relative overflow-hidden">
+              <button
+                onClick={handleOpenModal}
+                disabled={!previewImage.length}
+                className={` w-full sm:w-auto flex items-center justify-center h-12 px-8 rounded-xl shadow-lg transition-all font-semibold relative overflow-hidden
+                  ${
+                    previewImage.length
+                      ? "bg-gradient-to-r from-blue-400 to-purple-500 hover:shadow-xl hover:scale-[1.02] text-white"
+                      : "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
+                  }
+                `}
+              >
                 <span className="relative z-10">Mint NFT</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
               </button>
             </div>
           </div>
@@ -267,7 +408,7 @@ export default function Home() {
                     <div className="text-center space-y-4 animate-pulse">
                       <div className="w-24 h-24 mx-auto bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-xl opacity-30" />
                       <p className="font-medium text-lg">
-                        Start Creating Your Entity
+                        Start Creating Your NFT
                       </p>
                     </div>
                   </div>
@@ -280,6 +421,14 @@ export default function Home() {
 
       {/* Floating Particles Background */}
       <ParticleBackground />
+
+      <MintNFTModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        imageSrc={previewImage} // Mengirimkan array gambar
+        onDownloadImage={handleDownloadImage}
+        onDownloadMetadata={handleDownloadMetadata}
+      />
     </main>
   );
 }
