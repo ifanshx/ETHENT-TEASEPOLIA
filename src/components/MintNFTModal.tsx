@@ -1,38 +1,59 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface MintNFTModalProps {
   isOpen: boolean;
   onClose: () => void;
   imageSrc: string[];
-  onDownloadImage: (name: string) => void;
-  onDownloadMetadata: (name: string, description: string) => void;
+  onMint: (name: string, description: string) => Promise<string | null>;
 }
 
 export default function MintNFTModal({
   isOpen,
   onClose,
   imageSrc,
-  onDownloadImage,
-  onDownloadMetadata,
+  onMint,
 }: MintNFTModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false); // State for loading
+  const [isClient, setIsClient] = useState(false); // State to track client-side rendering
 
-  if (!isOpen) return null;
+  // Set the isClient flag to true only after the component is mounted on the client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-  const handleDownload = () => {
+  const handleMint = async () => {
     if (!name || !description) {
-      setError("Please fill in both the NFT Name and Description.");
-      setTimeout(() => setError(null), 3000); // Peringatan hilang setelah 3 detik
+      setError("Both name and description are required.");
       return;
     }
-    setError(null);
-    onDownloadImage(name);
-    onDownloadMetadata(name, description);
+    setError(null); // Reset error
+    setLoading(true); // Set loading to true when minting starts
+
+    const response = await onMint(name, description);
+    setLoading(false); // Set loading to false after minting process
+    if (response) {
+      console.log("NFT Minted:", response);
+      onClose(); // Close modal after successful minting
+    } else {
+      setError("Failed to mint NFT.");
+    }
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    // Reset form values when modal opens
+    setName("");
+    setDescription("");
+    setError(null);
+    setLoading(false);
+  }, [isOpen]);
+
+  if (!isOpen || !isClient) return null; // Ensure client-side rendering
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -41,7 +62,7 @@ export default function MintNFTModal({
           Create Your NFT
         </h2>
 
-        {/* Tombol Close */}
+        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-3xl text-gray-800 dark:text-white hover:text-gray-500 dark:hover:text-gray-300 transition duration-300 ease-in-out transform hover:scale-110"
@@ -50,7 +71,7 @@ export default function MintNFTModal({
         </button>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Gambar NFT */}
+          {/* NFT Preview */}
           <div className="flex justify-center items-center relative border rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 transition-transform transform hover:scale-105 hover:shadow-xl">
             {imageSrc.length > 0 ? (
               imageSrc.map((src, index) => (
@@ -69,7 +90,7 @@ export default function MintNFTModal({
             )}
           </div>
 
-          {/* Form Metadata */}
+          {/* Metadata Form */}
           <div className="space-y-4 w-full">
             <label className="block">
               <span className="text-gray-700 dark:text-gray-300 font-medium">
@@ -97,20 +118,24 @@ export default function MintNFTModal({
               />
             </label>
 
-            {/* Peringatan */}
+            {/* Error Message */}
             {error && (
               <div className="text-red-500 text-sm transition-all duration-300 opacity-100">
                 {error}
               </div>
             )}
 
-            {/* Tombol Download */}
-            <div className="flex gap-4">
+            <div className="flex gap-4 mt-6">
               <button
-                onClick={handleDownload}
-                className="w-full py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition ease-in-out duration-300"
+                onClick={handleMint}
+                disabled={loading} // Disable button while loading
+                className={`w-full py-4 text-white rounded-lg shadow-md transition ease-in-out duration-300 transform ${
+                  loading
+                    ? "bg-blue-300 cursor-not-allowed"
+                    : "bg-blue-500 hover:bg-blue-600"
+                }`}
               >
-                MINT
+                {loading ? "Minting..." : "Mint NFT"}
               </button>
             </div>
           </div>

@@ -4,7 +4,14 @@ import ParticleBackground from "@/components/ParticleBackground";
 import { METADATA_TRAITS } from "@/constants/metadata";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Dices } from "lucide-react";
+import { PinataSDK } from "pinata-web3";
 import { useEffect, useState } from "react";
+
+const pinata = new PinataSDK({
+  pinataJwt:
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJhZGM4OGQ0OC0wMDg4LTRjMmMtOGIxMS01NjRkODQxZTMwYzAiLCJlbWFpbCI6ImlyZmFhbnNob29kaXExOTU0QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiJmNjE4OTRkYzRiNTM3Y2VlZjg4YyIsInNjb3BlZEtleVNlY3JldCI6IjRjNjg1YTIxOWQwM2FiOTAwZWYyMGU1Y2I2MGZhMDRjMzdiODA0ZWE0NWViNDFhZDk1MjM0ZmRiNDkwMThiNjkiLCJleHAiOjE3Njk5NDEwOTZ9.kElikjPEK_-KCZom76QxOroAHEc-2jAmiqBRjrieZJk",
+  pinataGateway: "https://red-equivalent-hawk-791.mypinata.cloud/",
+});
 
 type TraitType =
   | "Backdrop"
@@ -57,12 +64,26 @@ export default function Home() {
   }, [activeTraits]);
 
   const handleRandomTraits = (): void => {
+    // Create an object to store the selected random traits
     const randomTraits: Partial<SelectedTraits> = {};
+
+    // Iterate over each trait from the available list
     traits.forEach((trait) => {
-      const traitList = METADATA_TRAITS[trait] as string[];
-      const randomIndex = Math.floor(Math.random() * traitList.length);
-      randomTraits[trait] = traitList[randomIndex];
+      // Check if METADATA_TRAITS contains the trait
+      const traitList = METADATA_TRAITS[trait] as string[] | undefined;
+
+      if (traitList && traitList.length > 0) {
+        // Select a random index within the trait list
+        const randomIndex = Math.floor(Math.random() * traitList.length);
+        randomTraits[trait] = traitList[randomIndex];
+      } else {
+        // Handle case if no traits found for a given trait
+        console.warn(`No available options for trait: ${trait}`);
+        randomTraits[trait] = ""; // or you can choose a default value
+      }
     });
+
+    // Update the state with the selected random traits
     setSelectedTraits(randomTraits as SelectedTraits);
   };
 
@@ -84,88 +105,77 @@ export default function Home() {
     setIsModalOpen(true);
   };
 
-  const handleDownloadImage = async (name: string): Promise<void> => {
-    const imageName = `${name.replace(/\s+/g, "_")}.png`;
+  const handleMintNFT = async (
+    name: string,
+    description: string
+  ): Promise<string | null> => {
+    try {
+      const imageName = `${name.replace(/\s+/g, "_")}.png`;
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
 
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Could not get canvas context");
 
-    if (!ctx) {
-      console.error("Could not get canvas context");
-      return;
+      canvas.width = 1000;
+      canvas.height = 1000;
+
+      const loadImage = async (trait: TraitType) => {
+        if (!selectedTraits[trait]) return;
+        return new Promise<void>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve();
+          };
+          img.onerror = () =>
+            reject(new Error(`Failed to load image for trait ${trait}`));
+
+          if (selectedTraits[trait].startsWith("custom-")) {
+            const dataUrl = localStorage.getItem(selectedTraits[trait]);
+            img.src = dataUrl || "";
+          } else {
+            img.src = `/assets/${trait}/${selectedTraits[trait]}`;
+          }
+        });
+      };
+
+      await Promise.all(traits.map(loadImage));
+
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((b) => resolve(b), "image/png");
+      });
+
+      if (!blob) throw new Error("Could not create blob from canvas");
+
+      const file = new File([blob], imageName, { type: "image/png" });
+      const imageUpload = await pinata.upload.file(file);
+      const imageCID = imageUpload.IpfsHash;
+      const imageUrl = `https://red-equivalent-hawk-791.mypinata.cloud/ipfs/${imageCID}`;
+
+      // Rapi metadata JSON format
+      const metadata = {
+        name: name,
+        description: description,
+        image: imageUrl,
+        attributes: traits.map((trait) => ({
+          trait_type: trait,
+          value: selectedTraits[trait] || "None",
+        })),
+      };
+
+      // Membuat file metadata dan upload ke IPFS
+      const metadataFile = new File(
+        [JSON.stringify(metadata, null, 2)], // Format JSON dengan indentation 2 spasi
+        `${name.replace(/\s+/g, "_")}.json`,
+        { type: "application/json" }
+      );
+
+      const metadataUpload = await pinata.upload.file(metadataFile);
+      return metadataUpload.IpfsHash;
+    } catch (error) {
+      console.error("Error during NFT minting:", error);
+      return null;
     }
-
-    canvas.width = 1000;
-    canvas.height = 1000;
-
-    for (const trait of traits) {
-      if (selectedTraits[trait]) {
-        try {
-          await new Promise<void>((resolve, reject) => {
-            const img = document.createElement("img") as HTMLImageElement;
-
-            img.onload = () => {
-              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-              resolve();
-            };
-
-            img.onerror = () =>
-              reject(new Error(`Failed to load image for trait ${trait}`));
-
-            // Check if it's a custom uploaded image
-            if (selectedTraits[trait].startsWith("custom-")) {
-              const dataUrl = localStorage.getItem(selectedTraits[trait]);
-              img.src = dataUrl || "";
-            } else {
-              img.src = `/assets/${trait}/${selectedTraits[trait]}`;
-            }
-          });
-        } catch (error) {
-          console.error(`Error loading image for trait ${trait}:`, error);
-        }
-      }
-    }
-
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        console.error("Could not create blob from canvas");
-        return;
-      }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = imageName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, "image/png");
-  };
-
-  const handleDownloadMetadata = (name: string, description: string): void => {
-    const metadataName = `${name.replace(/\s+/g, "_")}.json`;
-
-    const metadata = {
-      name,
-      description,
-      image: "ipfs://your-image-hash", // Ganti dengan CID IPFS atau path gambar
-      attributes: traits.map((trait) => ({
-        trait_type: trait,
-        value: selectedTraits[trait] || "None",
-      })),
-    };
-
-    const blob = new Blob([JSON.stringify(metadata, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = metadataName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   const [previewImage, setPreviewImage] = useState<string[]>([]);
@@ -426,8 +436,7 @@ export default function Home() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         imageSrc={previewImage} // Mengirimkan array gambar
-        onDownloadImage={handleDownloadImage}
-        onDownloadMetadata={handleDownloadMetadata}
+        onMint={handleMintNFT}
       />
     </main>
   );
