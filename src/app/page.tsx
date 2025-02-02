@@ -337,7 +337,7 @@ export default function Home() {
                           />
                         ) : (
                           <img
-                            src={`/assets/${activeTraits.toLowerCase()}/${item.toLowerCase()}`}
+                            src={`/assets/${activeTraits}/${item}`}
                             alt={`Trait ${item}`}
                             className="object-cover"
                             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
