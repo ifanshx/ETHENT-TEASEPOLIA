@@ -14,42 +14,52 @@ const pinata = new PinataSDK({
 });
 
 type TraitType =
-  | "Backdrop"
-  | "Body"
-  | "Clothing"
-  | "Eyes"
-  | "Mouth"
+  | "Background"
+  | "Skin"
+  | "Hands"
+  | "Clothes"
+  | "Beard"
   | "Head"
+  | "Eyes"
+  | "Mustache"
+  | "Nose"
   | "Speciality"
-  | "Hand";
+  | "Coin";
+
 type SelectedTraits = {
   [key in TraitType]: string;
 };
 
 export default function Home() {
   const traits: TraitType[] = [
-    "Backdrop",
-    "Body",
-    "Clothing",
-    "Eyes",
-    "Mouth",
+    "Background",
+    "Skin",
+    "Clothes",
+    "Beard",
     "Head",
+    "Eyes",
+    "Hands",
+    "Mustache",
+    "Nose",
     "Speciality",
-    "Hand",
+    "Coin",
   ];
 
-  const [activeTraits, setActiveTraits] = useState<TraitType>("Backdrop");
+  const [activeTraits, setActiveTraits] = useState<TraitType>("Background");
   const [listTraits, setListTraits] = useState<string[]>([]);
   const [isHoveringPreview, setIsHoveringPreview] = useState(false);
   const [selectedTraits, setSelectedTraits] = useState<SelectedTraits>({
-    Backdrop: "",
-    Body: "",
-    Clothing: "",
-    Eyes: "",
-    Mouth: "",
+    Background: "",
+    Skin: "",
+    Hands: "",
+    Clothes: "",
+    Beard: "",
     Head: "",
+    Eyes: "",
+    Mustache: "",
+    Nose: "",
     Speciality: "",
-    Hand: "",
+    Coin: "",
   });
 
   useEffect(() => {
@@ -92,7 +102,7 @@ export default function Home() {
       ...prev,
       [activeTraits]:
         prev[activeTraits] === item
-          ? activeTraits === "Backdrop"
+          ? activeTraits === "Background"
             ? item
             : ""
           : item,
