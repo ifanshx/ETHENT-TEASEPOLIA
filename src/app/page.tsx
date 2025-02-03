@@ -183,6 +183,8 @@ export default function Home() {
       );
 
       const metadataUpload = await pinata.upload.file(metadataFile);
+      const metadataCID = metadataUpload.IpfsHash;
+      console.log("Metadata", metadataCID);
       return metadataUpload.IpfsHash;
     } catch (error) {
       console.error("Error during NFT minting:", error);
