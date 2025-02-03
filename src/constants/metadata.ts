@@ -76,6 +76,7 @@ const METADATA_TRAITS: MetadataTraits = {
     "Zeus Suit.png",
   ],
   Coin: [
+    "TEA.png",
     "ADA.png",
     "AKASH.png",
     "APE.png",
