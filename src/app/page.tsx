@@ -1,11 +1,19 @@
 "use client";
 import MintNFTModal from "@/components/MintNFTModal";
 import ParticleBackground from "@/components/ParticleBackground";
+import { mintNFTABI, mintNFTAddress } from "@/constants/ContractAbi";
 import { METADATA_TRAITS } from "@/constants/metadata";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Dices } from "lucide-react";
 import { PinataSDK } from "pinata-web3";
 import { useEffect, useState } from "react";
+import { parseEther } from "viem";
+
+import {
+  type BaseError,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
 
 const pinata = new PinataSDK({
   pinataJwt:
@@ -63,7 +71,12 @@ export default function Home() {
     Coin: "",
     Hands: "",
   });
-
+  const { data: hash, error, isPending, writeContract } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+  useWaitForTransactionReceipt({
+    hash,
+  });
+  
   useEffect(() => {
     localStorage.clear();
   }, []);
@@ -184,12 +197,25 @@ export default function Home() {
 
       const metadataUpload = await pinata.upload.file(metadataFile);
       const metadataCID = metadataUpload.IpfsHash;
+      const metadataUri = `ipfs://${metadataCID}`;
       console.log("Metadata", metadataCID);
-      return metadataUpload.IpfsHash;
+
+      // 4. Execute Mint Transaction
+      const transaction = await writeContract({
+        address: mintNFTAddress,
+        abi: mintNFTABI,
+        functionName: "mint",
+        args: [BigInt(1), metadataUri],
+        value: parseEther("0.1"),
+      });
+
+      console.log("Transaction", transaction);
     } catch (error) {
-      console.error("Error during NFT minting:", error);
+      console.error("Failed to mint NFT", error);
       return null;
     }
+
+    return "Minting successful";
   };
 
   const [previewImage, setPreviewImage] = useState<string[]>([]);
