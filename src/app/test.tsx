@@ -9,7 +9,12 @@ import { PinataSDK } from "pinata-web3";
 import { useEffect, useState } from "react";
 import { parseEther } from "viem";
 
-import { useAccount, useWriteContract } from "wagmi";
+import {
+  type BaseError,
+  useAccount,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
 
 const pinata = new PinataSDK({
   pinataJwt:
@@ -67,7 +72,11 @@ export default function Home() {
     Coin: "",
     Hands: "",
   });
-  const { writeContract } = useWriteContract();
+  const { data: hash, isPending, writeContract } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
 
   useEffect(() => {
     localStorage.clear();
@@ -121,9 +130,7 @@ export default function Home() {
   const handleOpenModal = (): void => {
     setIsModalOpen(true);
   };
-
   const { isConnected } = useAccount();
-
   const handleMintNFT = async (
     name: string,
     description: string
@@ -198,18 +205,29 @@ export default function Home() {
       const metadataUri = `ipfs://${metadataCID}`;
       console.log("Metadata", metadataCID);
 
-      // 4. Execute Mint Transaction
-      const transaction = await writeContract({
-        address: mintNFTAddress,
-        abi: mintNFTABI,
-        functionName: "mint",
-        args: [BigInt(1), metadataUri],
-        value: parseEther("1"),
-      });
-
-      console.log("Transaction", transaction);
+      try {
+        await writeContract({
+          address: mintNFTAddress,
+          abi: mintNFTABI,
+          functionName: "mint",
+          args: [BigInt(1), metadataUri],
+          value: parseEther("1"),
+        });
+      } catch (error) {
+        console.error("Error minting NFT:", error);
+      }
+      if (isConfirmed) {
+        return "Minting successful";
+      }
     } catch (error) {
       console.error("Failed to mint NFT", error);
+      if (
+        error instanceof Error &&
+        error.message.includes("connect your wallet")
+      ) {
+        alert("Please connect your wallet before minting");
+      }
+
       return null;
     }
 
@@ -475,7 +493,8 @@ export default function Home() {
         onClose={() => setIsModalOpen(false)}
         imageSrc={previewImage} // Mengirimkan array gambar
         onMint={handleMintNFT}
-  
+        confirmationTx={isConfirming}
+        pendingTx={isPending}
       />
     </main>
   );
