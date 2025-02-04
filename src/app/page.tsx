@@ -73,10 +73,10 @@ export default function Home() {
   });
   const { data: hash, error, isPending, writeContract } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
-  useWaitForTransactionReceipt({
-    hash,
-  });
-  
+    useWaitForTransactionReceipt({
+      hash,
+    });
+
   useEffect(() => {
     localStorage.clear();
   }, []);
@@ -206,7 +206,7 @@ export default function Home() {
         abi: mintNFTABI,
         functionName: "mint",
         args: [BigInt(1), metadataUri],
-        value: parseEther("0.1"),
+        value: parseEther("1"),
       });
 
       console.log("Transaction", transaction);
@@ -451,7 +451,16 @@ export default function Home() {
                     />
                   );
                 })}
-
+                {isConfirmed && (
+                  <div className="mt-2 text-green-600 font-semibold">
+                    Transaction confirmed! 🎉
+                  </div>
+                )}
+                {error && (
+                  <div className="mt-2 text-red-600 font-semibold">
+                    Error: {(error as BaseError).shortMessage || error.message}
+                  </div>
+                )}
                 {/* Empty State */}
                 {!traits.some((trait) => selectedTraits[trait]) && (
                   <div className="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-600">
@@ -477,6 +486,8 @@ export default function Home() {
         onClose={() => setIsModalOpen(false)}
         imageSrc={previewImage} // Mengirimkan array gambar
         onMint={handleMintNFT}
+        confirmationTx={isConfirming}
+        pendingTx={isPending}
       />
     </main>
   );

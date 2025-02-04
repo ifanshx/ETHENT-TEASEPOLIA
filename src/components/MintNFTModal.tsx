@@ -7,6 +7,8 @@ interface MintNFTModalProps {
   onClose: () => void;
   imageSrc: string[];
   onMint: (name: string, description: string) => Promise<string | null>;
+  confirmationTx: boolean;
+  pendingTx: boolean;
 }
 
 export default function MintNFTModal({
@@ -14,6 +16,8 @@ export default function MintNFTModal({
   onClose,
   imageSrc,
   onMint,
+  confirmationTx,
+  pendingTx,
 }: MintNFTModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -122,6 +126,16 @@ export default function MintNFTModal({
             {error && (
               <div className="text-red-500 text-sm transition-all duration-300 opacity-100">
                 {error}
+              </div>
+            )}
+            {pendingTx && (
+              <div className="mt-2 text-yellow-600 font-semibold">
+                Waiting for confirmation...
+              </div>
+            )}
+            {confirmationTx && (
+              <div className="mt-2 text-yellow-600 font-semibold">
+                Waiting for confirmation...
               </div>
             )}
 
