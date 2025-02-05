@@ -7,7 +7,16 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Dices } from "lucide-react";
 import { PinataSDK } from "pinata-web3";
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
+import {
+  BaseError,
+  useAccount,
+  useReadContract,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
+
+import { parseEther } from "viem";
+import { mintNFTABI, mintNFTAddress } from "@/constants/ContractAbi";
 
 const pinata = new PinataSDK({
   pinataJwt:
@@ -48,10 +57,13 @@ export default function Home() {
     "Hands",
   ];
   const { showToast } = useToast();
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const [activeTraits, setActiveTraits] = useState<TraitType>("Background");
   const [listTraits, setListTraits] = useState<string[]>([]);
   const [isHoveringPreview, setIsHoveringPreview] = useState(false);
+  const [maxSupply, setMaxSupply] = useState<number | null>(null);
+  const [totalSupply, setTotalSupply] = useState<number | null>(null);
+
   const [selectedTraits, setSelectedTraits] = useState<SelectedTraits>({
     Background: "",
     Speciality: "",
@@ -116,8 +128,76 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = (): void => {
+    if (!isConnected) {
+      showToast("Please connect your wallet first", "error");
+      return;
+    }
+    if (!previewImage.length) {
+      showToast("Please select traits first", "error");
+      return;
+    }
     setIsModalOpen(true);
   };
+
+  const [metadataCID, setMetadataCID] = useState("");
+  const {
+    data: hash,
+    error: txError,
+    isPending,
+    writeContract,
+  } = useWriteContract();
+  const mintAmount = 1;
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
+
+  useEffect(() => {
+    if (isConfirming) showToast("Transaction is being confirmed...", "info");
+    if (isConfirmed) showToast("NFT Minted Successfully!", "success");
+    if (txError) {
+      const errorMessage =
+        txError instanceof BaseError
+          ? txError.shortMessage || txError.message
+          : "Transaction Failed";
+
+      showToast(errorMessage, "error");
+    }
+  }, [isConfirming, isConfirmed, txError, showToast]);
+
+  const MintNFT = async () => {
+    return await writeContract({
+      address: mintNFTAddress,
+      abi: mintNFTABI,
+      functionName: "mint",
+      args: [BigInt(mintAmount), metadataCID],
+      value: parseEther("1"),
+    });
+  };
+
+  const { data: maxSupplyData } = useReadContract({
+    address: mintNFTAddress,
+    abi: mintNFTABI,
+    functionName: "MAX_SUPPLY",
+  });
+
+  const { data: totalSupplyData } = useReadContract({
+    address: mintNFTAddress,
+    abi: mintNFTABI,
+    functionName: "totalSupply",
+  });
+
+  useEffect(() => {
+    if (maxSupplyData) setMaxSupply(Number(maxSupplyData));
+    if (totalSupplyData) setTotalSupply(Number(totalSupplyData));
+  }, [maxSupplyData, totalSupplyData]);
+
+  const { data: mintedCount, refetch } = useReadContract({
+    address: mintNFTAddress,
+    abi: mintNFTABI,
+    functionName: "userBalance",
+    args: [address || "0x0000000000000000000000000000000000000000"],
+  });
 
   const handleMintNFT = async (
     name: string,
@@ -190,7 +270,11 @@ export default function Home() {
       const metadataUpload = await pinata.upload.file(metadataFile);
       const metadataCID = metadataUpload.IpfsHash;
       console.log("Metadata", metadataCID);
-      return metadataUpload.IpfsHash;
+      setMetadataCID(metadataCID);
+
+      MintNFT();
+      refetch();
+      return metadataCID;
     } catch (error) {
       showToast("Error during NFT minting:", "error");
 
@@ -215,12 +299,22 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:bg-gradient-to-br dark:from-gray-900 dark:to-blue-900 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
-        <div className="text-center mb-16 space-y-6">
-          <h1 className="text-6xl font-bold tracking-tighter bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 bg-clip-text text-transparent animate-gradient">
+        <div className="text-center mb-16 space-y-1">
+          <h1 className="text-6xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 bg-clip-text text-transparent animate-gradient mb-4">
             ETHEREAL ENTITIES
           </h1>
+
+          {/* Total Supply Section */}
+          <div className="space-y-2">
+            <p className="text-3xl font-extrabold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+              Total Supply
+            </p>
+            <div className="text-2xl font-extrabold text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 bg-clip-text">
+              {totalSupply}/{maxSupply}
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col-reverse lg:flex-row gap-8">
@@ -385,16 +479,22 @@ export default function Home() {
 
               <button
                 onClick={handleOpenModal}
-                disabled={!previewImage.length}
-                className={` w-full sm:w-auto flex items-center justify-center h-12 px-8 rounded-xl shadow-lg transition-all font-semibold relative overflow-hidden
-                  ${
-                    previewImage.length
-                      ? "bg-gradient-to-r from-blue-400 to-purple-500 hover:shadow-xl hover:scale-[1.02] text-white"
-                      : "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
-                  }
-                `}
+                disabled={
+                  !isConnected ||
+                  !previewImage.length ||
+                  (mintedCount !== undefined && Number(mintedCount) >= 5)
+                }
+                className={`px-6 py-3 rounded-xl font-semibold text-white transition-all ${
+                  !isConnected ||
+                  !previewImage.length ||
+                  (mintedCount && Number(mintedCount) >= 5)
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
               >
-                <span className="relative z-10">Mint NFT</span>
+                {mintedCount !== undefined
+                  ? `Mint NFT (${mintedCount.toString()}/5)`
+                  : "Mint NFT"}
               </button>
             </div>
           </div>
@@ -457,6 +557,7 @@ export default function Home() {
         onClose={() => setIsModalOpen(false)}
         imageSrc={previewImage} // Mengirimkan array gambar
         onMint={handleMintNFT}
+        onisPending={isPending}
       />
     </main>
   );

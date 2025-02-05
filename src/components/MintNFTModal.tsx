@@ -8,6 +8,7 @@ interface MintNFTModalProps {
   onClose: () => void;
   imageSrc: string[];
   onMint: (name: string, description: string) => Promise<string | null>;
+  onisPending: boolean;
 }
 
 export default function MintNFTModal({
@@ -15,10 +16,10 @@ export default function MintNFTModal({
   onClose,
   imageSrc,
   onMint,
+  onisPending,
 }: MintNFTModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [isMinting, setIsMinting] = useState(false);
   const { showToast } = useToast();
 
   const handleMint = async () => {
@@ -27,19 +28,12 @@ export default function MintNFTModal({
       return;
     }
 
-    setIsMinting(true);
-    try {
-      const mintResult = await onMint(name, description);
-      if (mintResult) {
-        showToast("NFT minted successfully!", "success");
-        onClose();
-      } else {
-        showToast("Minting failed. Please try again.", "error");
-      }
-    } catch (error) {
-      showToast("An error occurred during minting. Please try again.", "error");
-    } finally {
-      setIsMinting(false);
+    const result = await onMint(name, description);
+    if (result) {
+      showToast("NFT minted successfully!", "success");
+      onClose();
+    } else {
+      showToast("Failed to mint NFT. Please try again.", "error");
     }
   };
 
@@ -114,13 +108,13 @@ export default function MintNFTModal({
               <button
                 onClick={handleMint}
                 className={`w-full py-4 text-white rounded-lg shadow-md transition ease-in-out duration-300 transform ${
-                  isMinting
+                  onisPending
                     ? "bg-blue-300 cursor-not-allowed"
                     : "bg-blue-500 hover:bg-blue-600"
                 }`}
-                disabled={isMinting}
+                disabled={onisPending}
               >
-                {isMinting ? "Minting..." : "Mint NFT"}
+                {onisPending ? "Minting..." : "Mint NFT"}
               </button>
             </div>
           </div>
