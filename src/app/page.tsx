@@ -558,6 +558,9 @@ export default function Home() {
         imageSrc={previewImage} // Mengirimkan array gambar
         onMint={handleMintNFT}
         onisPending={isPending}
+        onisConfirmed={isConfirmed}
+        onisConfirming={isConfirming}
+        ontxError={txError ? txError.message : null}
       />
     </main>
   );

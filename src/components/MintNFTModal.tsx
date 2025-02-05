@@ -1,7 +1,7 @@
 "use client";
 import { useToast } from "@/context/ToastContext";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface MintNFTModalProps {
   isOpen: boolean;
@@ -9,6 +9,9 @@ interface MintNFTModalProps {
   imageSrc: string[];
   onMint: (name: string, description: string) => Promise<string | null>;
   onisPending: boolean;
+  onisConfirming: boolean;
+  onisConfirmed: boolean;
+  ontxError: string | null;
 }
 
 export default function MintNFTModal({
@@ -17,23 +20,62 @@ export default function MintNFTModal({
   imageSrc,
   onMint,
   onisPending,
+  onisConfirming,
+  onisConfirmed,
+  ontxError,
 }: MintNFTModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const { showToast } = useToast();
+  const [isMinting, setIsMinting] = useState(false);
+  const hasShownToast = useRef({
+    error: false,
+    confirming: false,
+    confirmed: false,
+  });
+
+  // Reset toast refs when the modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      hasShownToast.current.error = false;
+      hasShownToast.current.confirming = false;
+      hasShownToast.current.confirmed = false;
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (ontxError && !hasShownToast.current.error) {
+      showToast("Transaction failed!", "error");
+      hasShownToast.current.error = true;
+    }
+  }, [ontxError, showToast]);
+
+  useEffect(() => {
+    if (onisConfirming && !hasShownToast.current.confirming) {
+      showToast("Transaction confirming...", "info");
+      hasShownToast.current.confirming = true;
+    }
+  }, [onisConfirming, showToast]);
+
+  useEffect(() => {
+    if (onisConfirmed && !hasShownToast.current.confirmed) {
+      showToast("NFT successfully minted!", "success");
+      hasShownToast.current.confirmed = true;
+      setIsMinting(false);
+      onClose(); // Ensure onClose is memoized to prevent infinite loops
+    }
+  }, [onisConfirmed, showToast, onClose]); // onClose must be stable
 
   const handleMint = async () => {
     if (!name || !description) {
       showToast("Both name and description are required.", "warning");
       return;
     }
-
+    setIsMinting(true);
     const result = await onMint(name, description);
-    if (result) {
-      showToast("NFT minted successfully!", "success");
-      onClose();
-    } else {
-      showToast("Failed to mint NFT. Please try again.", "error");
+    if (!result) {
+      showToast("Minting failed.", "error");
+      setIsMinting(false);
     }
   };
 
@@ -108,13 +150,13 @@ export default function MintNFTModal({
               <button
                 onClick={handleMint}
                 className={`w-full py-4 text-white rounded-lg shadow-md transition ease-in-out duration-300 transform ${
-                  onisPending
+                  onisPending || isMinting
                     ? "bg-blue-300 cursor-not-allowed"
                     : "bg-blue-500 hover:bg-blue-600"
                 }`}
-                disabled={onisPending}
+                disabled={onisPending || isMinting}
               >
-                {onisPending ? "Minting..." : "Mint NFT"}
+                {onisPending || isMinting ? "Minting..." : "Mint NFT"}
               </button>
             </div>
           </div>
