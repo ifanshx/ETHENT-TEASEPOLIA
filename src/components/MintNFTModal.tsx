@@ -1,6 +1,7 @@
 "use client";
+import { useToast } from "@/context/ToastContext";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface MintNFTModalProps {
   isOpen: boolean;
@@ -17,46 +18,37 @@ export default function MintNFTModal({
 }: MintNFTModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false); // State for loading
-  const [isClient, setIsClient] = useState(false); // State to track client-side rendering
-
-  // Set the isClient flag to true only after the component is mounted on the client
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  const [isMinting, setIsMinting] = useState(false);
+  const { showToast } = useToast();
 
   const handleMint = async () => {
     if (!name || !description) {
-      setError("Both name and description are required.");
+      showToast("Both name and description are required.", "warning");
       return;
     }
-    setError(null); // Reset error
-    setLoading(true); // Set loading to true when minting starts
 
-    const response = await onMint(name, description);
-    setLoading(false); // Set loading to false after minting process
-    if (response) {
-      console.log("NFT Minted:", response);
-      onClose(); // Close modal after successful minting
-    } else {
-      setError("Failed to mint NFT.");
+    setIsMinting(true);
+    try {
+      const mintResult = await onMint(name, description);
+      if (mintResult) {
+        showToast("NFT minted successfully!", "success");
+        onClose();
+      } else {
+        showToast("Minting failed. Please try again.", "error");
+      }
+    } catch (error) {
+      showToast("An error occurred during minting. Please try again.", "error");
+    } finally {
+      setIsMinting(false);
     }
   };
 
-  useEffect(() => {
-    if (!isOpen) return;
-    // Reset form values when modal opens
-    setName("");
-    setDescription("");
-    setError(null);
-    setLoading(false);
-  }, [isOpen]);
-
-  if (!isOpen || !isClient) return null; // Ensure client-side rendering
-
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div
+      className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 ${
+        isOpen ? "block" : "hidden"
+      }`}
+    >
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 w-full max-w-2xl overflow-hidden relative">
         <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-6">
           Create Your NFT
@@ -118,24 +110,17 @@ export default function MintNFTModal({
               />
             </label>
 
-            {/* Error Message */}
-            {error && (
-              <div className="text-red-500 text-sm transition-all duration-300 opacity-100">
-                {error}
-              </div>
-            )}
-
             <div className="flex gap-4 mt-6">
               <button
                 onClick={handleMint}
-                disabled={loading} // Disable button while loading
                 className={`w-full py-4 text-white rounded-lg shadow-md transition ease-in-out duration-300 transform ${
-                  loading
+                  isMinting
                     ? "bg-blue-300 cursor-not-allowed"
                     : "bg-blue-500 hover:bg-blue-600"
                 }`}
+                disabled={isMinting}
               >
-                {loading ? "Minting..." : "Mint NFT"}
+                {isMinting ? "Minting..." : "Mint NFT"}
               </button>
             </div>
           </div>

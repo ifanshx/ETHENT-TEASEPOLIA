@@ -1,15 +1,13 @@
 "use client";
 import MintNFTModal from "@/components/MintNFTModal";
 import ParticleBackground from "@/components/ParticleBackground";
-import { mintNFTABI, mintNFTAddress } from "@/constants/ContractAbi";
 import { METADATA_TRAITS } from "@/constants/metadata";
+import { useToast } from "@/context/ToastContext";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Dices } from "lucide-react";
 import { PinataSDK } from "pinata-web3";
 import { useEffect, useState } from "react";
-import { parseEther } from "viem";
-
-import { useAccount, useWriteContract } from "wagmi";
+import { useAccount } from "wagmi";
 
 const pinata = new PinataSDK({
   pinataJwt:
@@ -49,7 +47,8 @@ export default function Home() {
     "Coin",
     "Hands",
   ];
-
+  const { showToast } = useToast();
+  const { isConnected } = useAccount();
   const [activeTraits, setActiveTraits] = useState<TraitType>("Background");
   const [listTraits, setListTraits] = useState<string[]>([]);
   const [isHoveringPreview, setIsHoveringPreview] = useState(false);
@@ -57,7 +56,6 @@ export default function Home() {
     Background: "",
     Speciality: "",
     Skin: "",
-
     Clothes: "",
     Beard: "",
     Head: "",
@@ -67,7 +65,6 @@ export default function Home() {
     Coin: "",
     Hands: "",
   });
-  const { writeContract } = useWriteContract();
 
   useEffect(() => {
     localStorage.clear();
@@ -122,17 +119,14 @@ export default function Home() {
     setIsModalOpen(true);
   };
 
-  const { isConnected } = useAccount();
-
   const handleMintNFT = async (
     name: string,
     description: string
   ): Promise<string | null> => {
     try {
       if (!isConnected) {
-        throw new Error("Please connect your wallet first");
+        showToast("Please connect your wallet first", "error");
       }
-
       const imageName = `${name.replace(/\s+/g, "_")}.png`;
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -195,25 +189,13 @@ export default function Home() {
 
       const metadataUpload = await pinata.upload.file(metadataFile);
       const metadataCID = metadataUpload.IpfsHash;
-      const metadataUri = `ipfs://${metadataCID}`;
       console.log("Metadata", metadataCID);
-
-      // 4. Execute Mint Transaction
-      const transaction = await writeContract({
-        address: mintNFTAddress,
-        abi: mintNFTABI,
-        functionName: "mint",
-        args: [BigInt(1), metadataUri],
-        value: parseEther("1"),
-      });
-
-      console.log("Transaction", transaction);
+      return metadataUpload.IpfsHash;
     } catch (error) {
-      console.error("Failed to mint NFT", error);
+      showToast("Error during NFT minting:", "error");
+
       return null;
     }
-
-    return "Minting successful";
   };
 
   const [previewImage, setPreviewImage] = useState<string[]>([]);
@@ -475,7 +457,6 @@ export default function Home() {
         onClose={() => setIsModalOpen(false)}
         imageSrc={previewImage} // Mengirimkan array gambar
         onMint={handleMintNFT}
-  
       />
     </main>
   );
