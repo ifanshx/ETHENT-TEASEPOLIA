@@ -6,7 +6,7 @@ import { useToast } from "@/context/ToastContext";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Dices } from "lucide-react";
 import { PinataSDK } from "pinata-web3";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   BaseError,
   useAccount,
@@ -127,7 +127,8 @@ export default function Home() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleOpenModal = (): void => {
+  const handleOpenModal = useCallback(() => {
+    setIsModalOpen(false);
     if (!isConnected) {
       showToast("Please connect your wallet first", "error");
       return;
@@ -137,7 +138,7 @@ export default function Home() {
       return;
     }
     setIsModalOpen(true);
-  };
+  }, [isConnected, showToast]); // ✅ Dependency yang tepat
 
   const [metadataCID, setMetadataCID] = useState("");
   const {
@@ -153,14 +154,17 @@ export default function Home() {
     });
 
   useEffect(() => {
-    if (isConfirming) showToast("Transaction is being confirmed...", "info");
-    if (isConfirmed) showToast("NFT Minted Successfully!", "success");
+    if (isConfirming) {
+      showToast("Transaction is being confirmed...", "info");
+    }
+    if (isConfirmed) {
+      showToast("NFT Minted Successfully!", "success");
+    }
     if (txError) {
       const errorMessage =
         txError instanceof BaseError
           ? txError.shortMessage || txError.message
           : "Transaction Failed";
-
       showToast(errorMessage, "error");
     }
   }, [isConfirming, isConfirmed, txError, showToast]);

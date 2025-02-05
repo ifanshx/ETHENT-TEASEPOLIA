@@ -34,22 +34,40 @@ export default function MintNFTModal({
     confirmed: false,
   });
 
-  // Reset toast refs when the modal closes
+  // Reset state saat modal ditutup
   useEffect(() => {
     if (!isOpen) {
-      hasShownToast.current.error = false;
-      hasShownToast.current.confirming = false;
-      hasShownToast.current.confirmed = false;
+      hasShownToast.current = { 
+        error: false, 
+        confirming: false, 
+        confirmed: false 
+      };
+      setName("");
+      setDescription("");
+      setIsMinting(false);
     }
   }, [isOpen]);
 
+  // Handle transaksi sukses
+  useEffect(() => {
+    if (onisConfirmed && !hasShownToast.current.confirmed) {
+      showToast("NFT successfully minted!", "success");
+      hasShownToast.current.confirmed = true;
+      setIsMinting(false);
+      onClose();
+    }
+  }, [onisConfirmed, onClose, showToast]);
+
+  // Handle error transaksi
   useEffect(() => {
     if (ontxError && !hasShownToast.current.error) {
-      showToast("Transaction failed!", "error");
+      showToast(ontxError, "error");
       hasShownToast.current.error = true;
+      setIsMinting(false);
     }
   }, [ontxError, showToast]);
 
+  // Handle konfirmasi transaksi
   useEffect(() => {
     if (onisConfirming && !hasShownToast.current.confirming) {
       showToast("Transaction confirming...", "info");
@@ -57,27 +75,21 @@ export default function MintNFTModal({
     }
   }, [onisConfirming, showToast]);
 
-  useEffect(() => {
-    if (onisConfirmed && !hasShownToast.current.confirmed) {
-      showToast("NFT successfully minted!", "success");
-      hasShownToast.current.confirmed = true;
-      setIsMinting(false);
-      onClose(); // Ensure onClose is memoized to prevent infinite loops
-    }
-  }, [onisConfirmed, showToast, onClose]); // onClose must be stable
-
   const handleMint = async () => {
     if (!name || !description) {
       showToast("Both name and description are required.", "warning");
       return;
     }
+
     setIsMinting(true);
     const result = await onMint(name, description);
+    
     if (!result) {
       showToast("Minting failed.", "error");
       setIsMinting(false);
     }
   };
+
 
   return (
     <div
