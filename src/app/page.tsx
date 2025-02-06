@@ -334,7 +334,7 @@ export default function Home() {
               Total Supply
             </p>
             <div className="text-2xl font-extrabold text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 bg-clip-text">
-              {totalSupply}/{maxSupply}
+              {totalSupply || 0}/{maxSupply}
             </div>
           </div>
         </div>
