@@ -94,6 +94,7 @@ export default function Home() {
     setListTraits([...defaultTraits]);
   }, [activeTraits]);
 
+  // Fungsi untuk memilih trait secara acak untuk setiap kategori
   const handleRandomTraits = (): void => {
     const randomTraits: Partial<SelectedTraits> = {};
     traits.forEach((trait) => {
@@ -109,6 +110,7 @@ export default function Home() {
     setSelectedTraits(randomTraits as SelectedTraits);
   };
 
+  // Fungsi untuk memilih atau membatalkan pilihan trait pada kategori aktif
   const handleSelectTrait = (item: string): void => {
     setSelectedTraits((prev) => ({
       ...prev,
@@ -181,21 +183,24 @@ export default function Home() {
     args: [address || "0x0000000000000000000000000000000000000000"],
   });
 
-  const handleMintNFT = async (
-    name: string,
-    description: string
-  ): Promise<string | null> => {
+  // Perbaikan: Menghapus parameter name dan description agar sesuai dengan pemanggilan event handler.
+  const handleMintNFT = async (): Promise<string | null> => {
     try {
       if (!isConnected) {
         showToast("Please connect your wallet first", "error");
         return null;
       }
 
+      // Definisikan nama dan deskripsi NFT
+      const nftName = "Ethereal Entities";
+      const nftDescription =
+        "Ethereal Entities is an NFT collection featuring mystical creatures from another world, combining digital art with spiritual essence. Each entity comes with a unique aura, carrying a mysterious story waiting to be revealed. An exploration of eternity in digital form and having parts of unimaginable dimensions.";
+
       // Mulai proses upload
       setIsUploading(true);
       showToast("Uploading image...", "info");
 
-      const imageName = `${name.replace(/\s+/g, "_")}.png`;
+      const imageName = `${nftName.replace(/\s+/g, "_")}.png`;
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
@@ -204,6 +209,7 @@ export default function Home() {
       canvas.width = 1000;
       canvas.height = 1000;
 
+      // Fungsi untuk memuat gambar tiap trait
       const loadImage = async (trait: TraitType) => {
         if (!selectedTraits[trait]) return;
         return new Promise<void>((resolve, reject) => {
@@ -239,11 +245,11 @@ export default function Home() {
 
       // Setelah upload gambar selesai, update toast dan lanjutkan upload metadata
       showToast("Uploading metadata...", "info");
+
       // Rapi metadata JSON format
       const metadata = {
-        name: "Ethereal Entities",
-        description:
-          "Ethereal Entities is an NFT collection featuring mystical creatures from another world, combining digital art with spiritual essence. Each entity comes with a unique aura, carrying a mysterious story waiting to be revealed. An exploration of eternity in digital form and having parts of unimaginable dimensions.",
+        name: nftName,
+        description: nftDescription,
         image: imageUrl,
         attributes: traits.map((trait) => ({
           trait_type: trait,
@@ -254,14 +260,14 @@ export default function Home() {
       // Membuat file metadata dan upload ke IPFS
       const metadataFile = new File(
         [JSON.stringify(metadata, null, 2)], // Format JSON dengan indentation 2 spasi
-        `${name.replace(/\s+/g, "_")}.json`,
+        `${nftName.replace(/\s+/g, "_")}.json`,
         { type: "application/json" }
       );
 
       const metadataUpload = await pinata.upload.file(metadataFile);
       const metadataCID = metadataUpload.IpfsHash;
       const metadataUri = `ipfs://${metadataCID}`;
-      console.log("Metadata", metadataCID);
+      console.log("Metadata CID:", metadataCID);
 
       // Selesai upload, nonaktifkan status loading
       setIsUploading(false);
@@ -285,6 +291,7 @@ export default function Home() {
     return "Minting successful";
   };
 
+  // Membuat preview image berdasarkan trait yang telah dipilih
   const previewImage = useMemo(() => {
     return traits
       .map((trait) => {
