@@ -121,8 +121,6 @@ export default function Home() {
     }));
   };
 
-  const [metadataCID, setMetadataCID] = useState("");
-
   const {
     data: hash,
     error: txError,
@@ -130,7 +128,6 @@ export default function Home() {
     writeContract,
   } = useWriteContract();
 
-  const mintAmount = 1;
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash });
 
@@ -177,17 +174,17 @@ export default function Home() {
     if (totalSupplyData) setTotalSupply(Number(totalSupplyData));
   }, [maxSupplyData, totalSupplyData]);
 
-  const { data: mintedCount, refetch } = useReadContract({
+  const { data: mintedCount } = useReadContract({
     address: mintNFTAddress,
     abi: mintNFTABI,
     functionName: "userBalance",
     args: [address || "0x0000000000000000000000000000000000000000"],
   });
 
-  const handleMintNFT = async (): Promise<string | null> => {
-    // Variabel untuk menyimpan CID file yang telah diupload
-    let uploadedImageCID: string | null = null;
-    let uploadedMetadataCID: string | null = null;
+  const handleMintNFT = async (
+    name: string,
+    description: string
+  ): Promise<string | null> => {
     try {
       if (!isConnected) {
         showToast("Please connect your wallet first", "error");
@@ -198,14 +195,15 @@ export default function Home() {
       setIsUploading(true);
       showToast("Uploading image...", "info");
 
+      const imageName = `${name.replace(/\s+/g, "_")}.png`;
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
+
       if (!ctx) throw new Error("Could not get canvas context");
 
       canvas.width = 1000;
       canvas.height = 1000;
 
-      // Fungsi untuk memuat dan menggambar masing-masing trait ke canvas
       const loadImage = async (trait: TraitType) => {
         if (!selectedTraits[trait]) return;
         return new Promise<void>((resolve, reject) => {
@@ -216,6 +214,7 @@ export default function Home() {
           };
           img.onerror = () =>
             reject(new Error(`Failed to load image for trait ${trait}`));
+
           if (selectedTraits[trait].startsWith("custom-")) {
             const dataUrl = localStorage.getItem(selectedTraits[trait]);
             img.src = dataUrl || "";
@@ -230,20 +229,20 @@ export default function Home() {
       const blob = await new Promise<Blob | null>((resolve) => {
         canvas.toBlob((b) => resolve(b), "image/png");
       });
+
       if (!blob) throw new Error("Could not create blob from canvas");
 
-      const file = new File([blob], "image.png", { type: "image/png" });
+      const file = new File([blob], imageName, { type: "image/png" });
       const imageUpload = await pinata.upload.file(file);
-      uploadedImageCID = imageUpload.IpfsHash;
-      const imageUrl = `https://red-equivalent-hawk-791.mypinata.cloud/ipfs/${uploadedImageCID}`;
+      const imageCID = imageUpload.IpfsHash;
+      const imageUrl = `https://red-equivalent-hawk-791.mypinata.cloud/ipfs/${imageCID}`;
 
       // Setelah upload gambar selesai, update toast dan lanjutkan upload metadata
       showToast("Uploading metadata...", "info");
-
+      // Rapi metadata JSON format
       const metadata = {
-        name: "Ethereal Entities",
-        description:
-          "Ethereal Entities is an NFT collection featuring mystical creatures from another world, combining digital art with spiritual essence. Each entity comes with a unique aura, carrying a mysterious story waiting to be revealed. An exploration of eternity in digital form and having parts of unimaginable dimensions.",
+        name: name,
+        description: description,
         image: imageUrl,
         attributes: traits.map((trait) => ({
           trait_type: trait,
@@ -251,61 +250,38 @@ export default function Home() {
         })),
       };
 
+      // Membuat file metadata dan upload ke IPFS
       const metadataFile = new File(
-        [JSON.stringify(metadata, null, 2)],
-        "metadata.json",
+        [JSON.stringify(metadata, null, 2)], // Format JSON dengan indentation 2 spasi
+        `${name.replace(/\s+/g, "_")}.json`,
         { type: "application/json" }
       );
+
       const metadataUpload = await pinata.upload.file(metadataFile);
-      uploadedMetadataCID = metadataUpload.IpfsHash;
-      console.log("Metadata", uploadedMetadataCID);
+      const metadataCID = metadataUpload.IpfsHash;
       const metadataUri = `ipfs://${metadataCID}`;
-      setMetadataCID(metadataUri);
+      console.log("Metadata", metadataCID);
 
       // Selesai upload, nonaktifkan status loading
       setIsUploading(false);
 
-      // Panggil kontrak untuk mint NFT
-      const MintNFT = async () => {
-        return await writeContract({
-          address: mintNFTAddress,
-          abi: mintNFTABI,
-          functionName: "mint",
-          args: [BigInt(mintAmount), metadataUri],
-          value: parseEther("5"),
-        });
-      };
-      console.log("Transaction", MintNFT);
-      refetch();
-      return uploadedMetadataCID;
+      // 4. Execute Mint Transaction
+      const transaction = await writeContract({
+        address: mintNFTAddress,
+        abi: mintNFTABI,
+        functionName: "mint",
+        args: [BigInt(1), metadataUri],
+        value: parseEther("1"),
+      });
+
+      console.log("Transaction", transaction);
     } catch (error) {
       showToast("Error during NFT minting", "error");
       console.error(error);
       setIsUploading(false);
-
-      // Jika terjadi error, coba hapus file yang sudah diupload dari Pinata
-      if (uploadedImageCID) {
-        try {
-          // Pastikan parameter dikirim sebagai array
-          await pinata.unpin([uploadedImageCID]);
-          console.log("Deleted uploaded image from IPFS:", uploadedImageCID);
-        } catch (unpinError) {
-          console.error("Failed to unpin image:", unpinError);
-        }
-      }
-      if (uploadedMetadataCID) {
-        try {
-          await pinata.unpin([uploadedMetadataCID]);
-          console.log(
-            "Deleted uploaded metadata from IPFS:",
-            uploadedMetadataCID
-          );
-        } catch (unpinError) {
-          console.error("Failed to unpin metadata:", unpinError);
-        }
-      }
-      return null;
     }
+
+    return "Minting successful";
   };
 
   const previewImage = useMemo(() => {
