@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import ParticleBackground from "@/components/ParticleBackground";
@@ -63,7 +62,7 @@ export default function Home() {
   const { showToast } = useToast();
   const { isConnected, address } = useAccount();
 
-  // State untuk trait aktif, list trait, dan nilai supply
+  // State untuk trait aktif, list trait, supply, dan status upload
   const [activeTraits, setActiveTraits] = useState<TraitType>("Background");
   const [listTraits, setListTraits] = useState<string[]>([]);
   const [isHoveringPreview, setIsHoveringPreview] = useState(false);
@@ -82,11 +81,9 @@ export default function Home() {
     Coin: "",
     Hands: "",
   });
-
-  // State untuk men-track status upload (gambar & metadata)
   const [isUploading, setIsUploading] = useState<boolean>(false);
 
-  // Membersihkan localStorage pada mount (jika diperlukan)
+  // Membersihkan localStorage saat mount (jika diperlukan)
   useEffect(() => {
     localStorage.clear();
   }, []);
@@ -140,7 +137,7 @@ export default function Home() {
   // Gunakan ref untuk melacak status sebelumnya agar toast hanya muncul sekali per perubahan
   const prevIsConfirming = useRef<boolean>(false);
   const prevIsConfirmed = useRef<boolean>(false);
-  const prevTxError = useRef<any>(null);
+  const prevTxError = useRef<BaseError | Error | null>(null);
 
   useEffect(() => {
     if (isConfirming && !prevIsConfirming.current) {
@@ -163,6 +160,7 @@ export default function Home() {
     }
   }, [isConfirming, isConfirmed, txError, showToast]);
 
+  // Fungsi untuk memanggil kontrak mint NFT
   const MintNFT = async () => {
     return await writeContract({
       address: mintNFTAddress,
@@ -198,13 +196,16 @@ export default function Home() {
   });
 
   const handleMintNFT = async (): Promise<string | null> => {
+    // Variabel untuk menyimpan CID file yang telah diupload
+    let uploadedImageCID: string | null = null;
+    let uploadedMetadataCID: string | null = null;
     try {
       if (!isConnected) {
         showToast("Please connect your wallet first", "error");
         return null;
       }
 
-      // Mulai proses upload, set status loading
+      // Mulai proses upload
       setIsUploading(true);
       showToast("Uploading image...", "info");
 
@@ -215,6 +216,7 @@ export default function Home() {
       canvas.width = 1000;
       canvas.height = 1000;
 
+      // Fungsi untuk memuat dan menggambar masing-masing trait ke canvas
       const loadImage = async (trait: TraitType) => {
         if (!selectedTraits[trait]) return;
         return new Promise<void>((resolve, reject) => {
@@ -243,8 +245,8 @@ export default function Home() {
 
       const file = new File([blob], "image.png", { type: "image/png" });
       const imageUpload = await pinata.upload.file(file);
-      const imageCID = imageUpload.IpfsHash;
-      const imageUrl = `https://red-equivalent-hawk-791.mypinata.cloud/ipfs/${imageCID}`;
+      uploadedImageCID = imageUpload.IpfsHash;
+      const imageUrl = `https://red-equivalent-hawk-791.mypinata.cloud/ipfs/${uploadedImageCID}`;
 
       // Setelah upload gambar selesai, update toast dan lanjutkan upload metadata
       showToast("Uploading metadata...", "info");
@@ -266,21 +268,42 @@ export default function Home() {
         { type: "application/json" }
       );
       const metadataUpload = await pinata.upload.file(metadataFile);
-      const metadataCID = metadataUpload.IpfsHash;
-      console.log("Metadata", metadataCID);
-      setMetadataCID(metadataCID);
+      uploadedMetadataCID = metadataUpload.IpfsHash;
+      console.log("Metadata", uploadedMetadataCID);
+      setMetadataCID(uploadedMetadataCID);
 
-      // Selesai upload, non-aktifkan status loading
+      // Selesai upload, nonaktifkan status loading
       setIsUploading(false);
 
-      // Panggil kontrak mint NFT
+      // Panggil kontrak untuk mint NFT
       await MintNFT();
       refetch();
-      return metadataCID;
+      return uploadedMetadataCID;
     } catch (error) {
       showToast("Error during NFT minting", "error");
       console.error(error);
       setIsUploading(false);
+
+      // Jika terjadi error, coba hapus file yang sudah diupload
+      if (uploadedImageCID) {
+        try {
+          await pinata.unpin([uploadedImageCID]);
+          console.log("Deleted uploaded image from IPFS:", uploadedImageCID);
+        } catch (unpinError) {
+          console.error("Failed to unpin image:", unpinError);
+        }
+      }
+      if (uploadedMetadataCID) {
+        try {
+          await pinata.unpin([uploadedMetadataCID]);
+          console.log(
+            "Deleted uploaded metadata from IPFS:",
+            uploadedMetadataCID
+          );
+        } catch (unpinError) {
+          console.error("Failed to unpin metadata:", unpinError);
+        }
+      }
       return null;
     }
   };
