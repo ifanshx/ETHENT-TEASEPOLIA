@@ -1,4 +1,4 @@
-export const mintNFTAddress = "0x0dA7c7c69Ec3de48E08dD48C2Db9eA7db632D6A7";
+export const mintNFTAddress = "0x337534bDfEc364C57C292F73ce5f4Ae3500672A0";
 export const mintNFTABI = [
   {
     inputs: [
@@ -166,6 +166,11 @@ export const mintNFTABI = [
   {
     inputs: [],
     name: "OwnershipNotInitializedForExtraData",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "ReentrancyGuardReentrantCall",
     type: "error",
   },
   {
