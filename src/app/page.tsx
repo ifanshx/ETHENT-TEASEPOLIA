@@ -312,11 +312,44 @@ export default function Home() {
           </h1>
           {/* Total Supply Section */}
           <div className="space-y-2">
-            <p className="text-3xl font-extrabold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+            <p className="text-3xl font-extrabold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-center">
               Total Supply
             </p>
-            <div className="text-2xl font-extrabold text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 bg-clip-text">
-              {totalSupply || 0}/{maxSupply}
+
+            {/* Progress Bar Container */}
+            <div className="relative">
+              {/* Animated Background Glow */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 blur-xl opacity-20 animate-pulse" />
+
+              {/* Progress Bar */}
+              <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 transition-all duration-1000 ease-out"
+                  style={{
+                    width: `${Math.min(
+                      (Number(totalSupply || 0) / Number(maxSupply || 1)) * 100,
+                      100
+                    )}%`,
+                    boxShadow: "0 0 15px rgba(96, 165, 250, 0.3)",
+                  }}
+                >
+                  {/* Animated Stripe Effect */}
+                  <div
+                    className="absolute inset-0 bg-[length:30px_30px] opacity-20 animate-progress-stripe"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent)",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Counter Text */}
+              <div className="mt-3 text-xl font-extrabold text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 bg-clip-text text-center">
+                {totalSupply || 0}
+                <span className="text-gray-400 mx-1">/</span>
+                {maxSupply}
+              </div>
             </div>
           </div>
         </div>
