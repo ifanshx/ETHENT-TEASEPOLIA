@@ -167,7 +167,7 @@ export default function Home() {
       abi: mintNFTABI,
       functionName: "mint",
       args: [BigInt(mintAmount), metadataCID],
-      value: parseEther("1"),
+      value: parseEther("5"),
     });
   };
 
