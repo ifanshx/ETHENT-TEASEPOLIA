@@ -241,8 +241,9 @@ export default function Home() {
       showToast("Uploading metadata...", "info");
       // Rapi metadata JSON format
       const metadata = {
-        name: name,
-        description: description,
+        name: "Ethereal Entities",
+        description:
+          "Ethereal Entities is an NFT collection featuring mystical creatures from another world, combining digital art with spiritual essence. Each entity comes with a unique aura, carrying a mysterious story waiting to be revealed. An exploration of eternity in digital form and having parts of unimaginable dimensions.",
         image: imageUrl,
         attributes: traits.map((trait) => ({
           trait_type: trait,
