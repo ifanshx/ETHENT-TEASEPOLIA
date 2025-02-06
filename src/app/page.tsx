@@ -270,7 +270,8 @@ export default function Home() {
       const metadataUpload = await pinata.upload.file(metadataFile);
       uploadedMetadataCID = metadataUpload.IpfsHash;
       console.log("Metadata", uploadedMetadataCID);
-      setMetadataCID(uploadedMetadataCID);
+      const metadataUri = `ipfs://${metadataCID}`;
+      setMetadataCID(metadataUri);
 
       // Selesai upload, nonaktifkan status loading
       setIsUploading(false);
