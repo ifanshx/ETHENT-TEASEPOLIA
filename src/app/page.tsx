@@ -10,6 +10,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import {
   BaseError,
   useAccount,
+  useBalance, // <-- Tambahkan import useBalance
   useReadContract,
   useWaitForTransactionReceipt,
   useWriteContract,
@@ -59,6 +60,11 @@ export default function Home() {
 
   const { showToast } = useToast();
   const { isConnected, address } = useAccount();
+
+  // Mengambil saldo wallet menggunakan useBalance
+  const { data: balanceData } = useBalance({
+    address: address,
+  });
 
   // State untuk trait aktif, list trait, supply, dan status upload
   const [activeTraits, setActiveTraits] = useState<TraitType>("Background");
@@ -506,14 +512,16 @@ export default function Home() {
                   !previewImage.length ||
                   (mintedCount !== undefined && Number(mintedCount) >= 5) ||
                   isPending ||
-                  isUploading
+                  isUploading ||
+                  (balanceData && balanceData.value < parseEther("5"))
                 }
                 className={`px-6 py-3 rounded-xl font-semibold text-white transition-all ${
                   !isConnected ||
                   !previewImage.length ||
                   (mintedCount && Number(mintedCount) >= 5) ||
                   isPending ||
-                  isUploading
+                  isUploading ||
+                  (balanceData && balanceData.value < parseEther("5"))
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-blue-600 hover:bg-blue-700"
                 }`}
