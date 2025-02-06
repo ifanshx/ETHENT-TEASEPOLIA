@@ -94,18 +94,18 @@ export default function Home() {
 
   // Fungsi untuk memilih trait secara acak untuk setiap kategori
   const handleRandomTraits = (): void => {
-    const randomTraits: Partial<SelectedTraits> = {};
+    const randomSelection: Partial<SelectedTraits> = {};
     traits.forEach((trait) => {
-      const traitList = METADATA_TRAITS[trait] as string[] | undefined;
-      if (traitList && traitList.length > 0) {
-        const randomIndex = Math.floor(Math.random() * traitList.length);
-        randomTraits[trait] = traitList[randomIndex];
+      const options = METADATA_TRAITS[trait] as string[] | undefined;
+      if (options && options.length > 0) {
+        const randomIndex = Math.floor(Math.random() * options.length);
+        randomSelection[trait] = options[randomIndex];
       } else {
         console.warn(`No available options for trait: ${trait}`);
-        randomTraits[trait] = "";
+        randomSelection[trait] = "";
       }
     });
-    setSelectedTraits(randomTraits as SelectedTraits);
+    setSelectedTraits(randomSelection as SelectedTraits);
   };
 
   // Fungsi untuk memilih atau membatalkan pilihan trait pada kategori aktif
@@ -121,17 +121,17 @@ export default function Home() {
     }));
   };
 
+  // Wagmi hooks for contract interactions
   const {
-    data: hash,
+    data: txHash,
     error: txError,
     isPending,
     writeContract,
   } = useWriteContract();
-
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({ hash });
+    useWaitForTransactionReceipt({ hash: txHash });
 
-  // Gunakan ref untuk melacak status sebelumnya agar toast hanya muncul sekali per perubahan
+  // Use refs to track previous transaction states to avoid duplicate toast notifications
   const prevIsConfirming = useRef<boolean>(false);
   const prevIsConfirmed = useRef<boolean>(false);
   const prevTxError = useRef<BaseError | Error | null>(null);
@@ -157,6 +157,7 @@ export default function Home() {
     }
   }, [isConfirming, isConfirmed, txError, showToast]);
 
+  // Read contract values for maxSupply and totalSupply
   const { data: maxSupplyData } = useReadContract({
     address: mintNFTAddress,
     abi: mintNFTABI,
@@ -174,6 +175,7 @@ export default function Home() {
     if (totalSupplyData) setTotalSupply(Number(totalSupplyData));
   }, [maxSupplyData, totalSupplyData]);
 
+  // Read the minted NFT count for the connected user
   const { data: mintedCount } = useReadContract({
     address: mintNFTAddress,
     abi: mintNFTABI,
@@ -181,34 +183,34 @@ export default function Home() {
     args: [address || "0x0000000000000000000000000000000000000000"],
   });
 
-  // Perbaikan: Menghapus parameter name dan description agar sesuai dengan pemanggilan event handler.
+  // Function to mint the NFT
   const handleMintNFT = async (): Promise<string | null> => {
-    try {
-      if (!isConnected) {
-        showToast("Please connect your wallet first", "error");
-        return null;
-      }
+    if (!isConnected) {
+      showToast("Please connect your wallet first", "error");
+      return null;
+    }
 
-      // Definisikan nama dan deskripsi NFT
+    try {
+      // Define NFT metadata
       const nftName = "Ethereal Entities";
       const nftDescription =
-        "Ethereal Entities is an NFT collection featuring mystical creatures from another world, combining digital art with spiritual essence. Each entity comes with a unique aura, carrying a mysterious story waiting to be revealed. An exploration of eternity in digital form and having parts of unimaginable dimensions.";
+        "Ethereal Entities is an NFT collection featuring mystical creatures from another world, combining digital art with spiritual essence. Each entity comes with a unique aura, carrying a mysterious story waiting to be revealed.";
 
-      // Mulai proses upload
+      // Begin the upload process
       setIsUploading(true);
       showToast("Uploading image...", "info");
 
+      // Create an image from a canvas by drawing selected trait images
       const imageName = `${nftName.replace(/\s+/g, "_")}.png`;
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
-
       if (!ctx) throw new Error("Could not get canvas context");
 
       canvas.width = 1000;
       canvas.height = 1000;
 
-      // Fungsi untuk memuat gambar tiap trait
-      const loadImage = async (trait: TraitType) => {
+      // Helper function to load and draw an image for a trait onto the canvas
+      const loadImage = async (trait: TraitType): Promise<void> => {
         if (!selectedTraits[trait]) return;
         return new Promise<void>((resolve, reject) => {
           const img = new Image();
@@ -219,6 +221,7 @@ export default function Home() {
           img.onerror = () =>
             reject(new Error(`Failed to load image for trait ${trait}`));
 
+          // Use custom image from localStorage if the trait starts with "custom-"
           if (selectedTraits[trait].startsWith("custom-")) {
             const dataUrl = localStorage.getItem(selectedTraits[trait]);
             img.src = dataUrl || "";
@@ -228,23 +231,23 @@ export default function Home() {
         });
       };
 
-      await Promise.all(traits.map(loadImage));
+      // Draw all selected trait images onto the canvas
+      await Promise.all(traits.map((trait) => loadImage(trait)));
 
-      const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob((b) => resolve(b), "image/png");
-      });
-
+      // Convert canvas to a Blob (PNG format)
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png")
+      );
       if (!blob) throw new Error("Could not create blob from canvas");
 
-      const file = new File([blob], imageName, { type: "image/png" });
-      const imageUpload = await pinata.upload.file(file);
-      const imageCID = imageUpload.IpfsHash;
+      // Upload the image to Pinata and get the IPFS URL
+      const imageFile = new File([blob], imageName, { type: "image/png" });
+      const imageUploadResponse = await pinata.upload.file(imageFile);
+      const imageCID = imageUploadResponse.IpfsHash;
       const imageUrl = `https://red-equivalent-hawk-791.mypinata.cloud/ipfs/${imageCID}`;
 
-      // Setelah upload gambar selesai, update toast dan lanjutkan upload metadata
+      // Notify the user and then upload the metadata
       showToast("Uploading metadata...", "info");
-
-      // Rapi metadata JSON format
       const metadata = {
         name: nftName,
         description: nftDescription,
@@ -255,22 +258,21 @@ export default function Home() {
         })),
       };
 
-      // Membuat file metadata dan upload ke IPFS
+      // Create metadata file and upload to Pinata
       const metadataFile = new File(
-        [JSON.stringify(metadata, null, 2)], // Format JSON dengan indentation 2 spasi
+        [JSON.stringify(metadata, null, 2)],
         `${nftName.replace(/\s+/g, "_")}.json`,
         { type: "application/json" }
       );
-
-      const metadataUpload = await pinata.upload.file(metadataFile);
-      const metadataCID = metadataUpload.IpfsHash;
+      const metadataUploadResponse = await pinata.upload.file(metadataFile);
+      const metadataCID = metadataUploadResponse.IpfsHash;
       const metadataUri = `ipfs://${metadataCID}`;
       console.log("Metadata CID:", metadataCID);
 
-      // Selesai upload, nonaktifkan status loading
+      // Finish the upload process
       setIsUploading(false);
 
-      // 4. Execute Mint Transaction
+      // Execute the mint transaction with the uploaded metadata URI
       const transaction = await writeContract({
         address: mintNFTAddress,
         abi: mintNFTABI,
@@ -278,15 +280,14 @@ export default function Home() {
         args: [BigInt(1), metadataUri],
         value: parseEther("5"),
       });
-
-      console.log("Transaction", transaction);
+      console.log("Transaction:", transaction);
+      return "Minting successful";
     } catch (error) {
       showToast("Error during NFT minting", "error");
       console.error(error);
       setIsUploading(false);
+      return null;
     }
-
-    return "Minting successful";
   };
 
   // Membuat preview image berdasarkan trait yang telah dipilih
