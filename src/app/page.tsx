@@ -284,9 +284,10 @@ export default function Home() {
       console.error(error);
       setIsUploading(false);
 
-      // Jika terjadi error, coba hapus file yang sudah diupload
+      // Jika terjadi error, coba hapus file yang sudah diupload dari Pinata
       if (uploadedImageCID) {
         try {
+          // Pastikan parameter dikirim sebagai array
           await pinata.unpin([uploadedImageCID]);
           console.log("Deleted uploaded image from IPFS:", uploadedImageCID);
         } catch (unpinError) {
