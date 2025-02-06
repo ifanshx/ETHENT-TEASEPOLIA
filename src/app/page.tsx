@@ -38,13 +38,11 @@ type TraitType =
   | "Coin"
   | "Hands";
 
-// Definisi tipe untuk state selected traits
 type SelectedTraits = {
   [key in TraitType]: string;
 };
 
 export default function Home() {
-  // Daftar trait yang digunakan
   const traits: TraitType[] = [
     "Background",
     "Speciality",
@@ -486,13 +484,19 @@ export default function Home() {
                     : "bg-blue-600 hover:bg-blue-700"
                 }`}
               >
-                {isUploading
-                  ? "Uploading..."
-                  : isPending
-                  ? "Minting..."
-                  : mintedCount !== undefined
-                  ? `Mint NFT (${mintedCount.toString()}/5)`
-                  : "Mint NFT"}
+                {isUploading ? (
+                  <>
+                    <div className="w-4 h-4 animate-spin" />
+                    Uploading Assets...
+                  </>
+                ) : isPending ? (
+                  <>
+                    <div className="w-4 h-4 animate-spin" />
+                    Confirming...
+                  </>
+                ) : (
+                  `Mint NFT (${mintedCount || 0}/5)`
+                )}
               </button>
             </div>
           </div>
@@ -500,7 +504,7 @@ export default function Home() {
           {/* Right Preview Panel */}
           <div className="flex-1 lg:max-w-xl">
             <div
-              className="relative aspect-square bg-gradient-to-br from-gray-50 dark:from-gray-800 to-white dark:to-gray-900 rounded-3xl shadow-2xl border-8 border-white dark:border-gray-800 overflow-hidden transform transition-transform duration-300 hover:scale-[1.01]"
+              className="relative aspect-square bg-gradient-to-br from-gray-50 dark:from-gray-800 to-white dark:to-gray-900 rounded-3xl shadow-2xl border-8 border-white dark:border-gray-800 overflow-hidden transition-all duration-300 transform hover:scale-105 hover:shadow-blue-500/50"
               onMouseEnter={() => setIsHoveringPreview(true)}
               onMouseLeave={() => setIsHoveringPreview(false)}
             >
