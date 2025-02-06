@@ -278,7 +278,7 @@ export default function Home() {
         abi: mintNFTABI,
         functionName: "mint",
         args: [BigInt(1), metadataUri],
-        value: parseEther("1"),
+        value: parseEther("5"),
       });
 
       console.log("Transaction", transaction);
