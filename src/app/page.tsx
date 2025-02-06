@@ -160,17 +160,6 @@ export default function Home() {
     }
   }, [isConfirming, isConfirmed, txError, showToast]);
 
-  // Fungsi untuk memanggil kontrak mint NFT
-  const MintNFT = async () => {
-    return await writeContract({
-      address: mintNFTAddress,
-      abi: mintNFTABI,
-      functionName: "mint",
-      args: [BigInt(mintAmount), metadataCID],
-      value: parseEther("5"),
-    });
-  };
-
   const { data: maxSupplyData } = useReadContract({
     address: mintNFTAddress,
     abi: mintNFTABI,
@@ -277,7 +266,16 @@ export default function Home() {
       setIsUploading(false);
 
       // Panggil kontrak untuk mint NFT
-      await MintNFT();
+      const MintNFT = async () => {
+        return await writeContract({
+          address: mintNFTAddress,
+          abi: mintNFTABI,
+          functionName: "mint",
+          args: [BigInt(mintAmount), metadataUri],
+          value: parseEther("5"),
+        });
+      };
+      console.log("Transaction", MintNFT);
       refetch();
       return uploadedMetadataCID;
     } catch (error) {
