@@ -312,6 +312,13 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:bg-gradient-to-br dark:from-gray-900 dark:to-blue-900 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-black mt-5">
+          <AdBanner
+            dataAdFormat="auto"
+            dataFullWidthResponsive={true}
+            dataAdSlot="9950972244"
+          />
+        </div>
         {/* Header Section */}
         <div className="text-center mb-16 space-y-1">
           <h1 className="text-6xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 bg-clip-text text-transparent animate-gradient mb-4">
@@ -586,13 +593,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div className="bg-black mt-5">
-          <AdBanner
-            dataAdFormat="auto"
-            dataFullWidthResponsive={true}
-            dataAdSlot="9950972244"
-          />
-        </div>{" "}
+
         <div className="bg-black mt-5">
           <AdBanner
             dataAdFormat="auto"
