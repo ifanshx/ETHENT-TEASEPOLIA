@@ -18,6 +18,10 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <AdSense pId="ca-pub-1677446125075790" />
+        <meta
+          name="google-adsense-account"
+          content="ca-pub-1677446125075790"
+        ></meta>
       </head>
       <body>
         <ContextProvider>
