@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 
-type AdBannerTypes = {
+type AdBannerProps = {
   dataAdSlot: string;
   dataAdFormat: string;
   dataFullWidthResponsive: boolean;
@@ -12,14 +12,16 @@ const AdBanner = ({
   dataAdSlot,
   dataAdFormat,
   dataFullWidthResponsive,
-}: AdBannerTypes) => {
+}: AdBannerProps) => {
   useEffect(() => {
     try {
-      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push(
-        {}
-      );
-    } catch (error: any) {
-      console.log(error.message);
+      const adsbygoogle =
+        (window as unknown as { adsbygoogle?: any }).adsbygoogle || [];
+      adsbygoogle.push({});
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log(error.message);
+      }
     }
   }, []);
 
