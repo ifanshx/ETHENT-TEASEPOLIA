@@ -15,9 +15,15 @@ const AdBanner = ({
 }: AdBannerTypes) => {
   useEffect(() => {
     try {
-      (window as unknown as { adsbygoogle: unknown[] }).adsbygoogle.push({});
-    } catch (error) {
-      console.error("AdSense error:", (error as Error).message);
+      ((window as unknown as { adsbygoogle: unknown[] }).adsbygoogle =
+        (window as unknown as { adsbygoogle: unknown[] }).adsbygoogle ||
+        []).push({});
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.log(error.message);
+      } else {
+        console.log("An unknown error occurred");
+      }
     }
   }, []);
 
