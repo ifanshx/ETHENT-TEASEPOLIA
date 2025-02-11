@@ -17,6 +17,7 @@ import {
 } from "wagmi";
 import { parseEther } from "viem";
 import { mintNFTABI, mintNFTAddress } from "@/constants/ContractAbi";
+import AdBanner from "@/components/AdBanner";
 
 // Inisialisasi Pinata SDK
 const pinata = new PinataSDK({
@@ -359,7 +360,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-
         <div className="flex flex-col-reverse lg:flex-row gap-8">
           {/* Left Panel */}
           <div className="flex-1 max-w-2xl">
@@ -585,6 +585,20 @@ export default function Home() {
               </div>
             </div>
           </div>
+        </div>
+        <div className="bg-black mt-5">
+          <AdBanner
+            dataAdFormat="auto"
+            dataFullWidthResponsive={true}
+            dataAdSlot="9950972244"
+          />
+        </div>{" "}
+        <div className="bg-black mt-5">
+          <AdBanner
+            dataAdFormat="auto"
+            dataFullWidthResponsive={true}
+            dataAdSlot="5111415395"
+          />
         </div>
       </div>
       <ParticleBackground />
