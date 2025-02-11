@@ -8,6 +8,12 @@ type AdBannerProps = {
   dataFullWidthResponsive: boolean;
 };
 
+declare global {
+  interface Window {
+    adsbygoogle?: { push: (params: unknown) => void }[];
+  }
+}
+
 const AdBanner = ({
   dataAdSlot,
   dataAdFormat,
@@ -15,12 +21,12 @@ const AdBanner = ({
 }: AdBannerProps) => {
   useEffect(() => {
     try {
-      const adsbygoogle =
-        (window as unknown as { adsbygoogle?: any }).adsbygoogle || [];
-      adsbygoogle.push({});
+      if (window.adsbygoogle) {
+        window.adsbygoogle[0].push({});
+      }
     } catch (error) {
       if (error instanceof Error) {
-        console.log(error.message);
+        console.error(error.message);
       }
     }
   }, []);
