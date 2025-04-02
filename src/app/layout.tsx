@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ContextProvider from "@/context";
 import { ToastProvider } from "@/context/ToastContext";
-import AdSense from "@/components/AdSense";
 
 export const metadata: Metadata = {
   title: "Ethereal Entities",
@@ -17,7 +16,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <AdSense pId="ca-pub-1677446125075790" />
       </head>
       <body>
         <ContextProvider>

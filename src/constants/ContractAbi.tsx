@@ -1,4 +1,4 @@
-export const mintNFTAddress = "0x337534bDfEc364C57C292F73ce5f4Ae3500672A0";
+export const mintNFTAddress = "0xcc433f15D100DFEd21Cd5ac19C415537746C764A";
 export const mintNFTABI = [
   {
     inputs: [

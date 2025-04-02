@@ -5,7 +5,7 @@ import { METADATA_TRAITS } from "@/constants/metadata";
 import { useToast } from "@/context/ToastContext";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Dices } from "lucide-react";
-import { PinataSDK } from "pinata-web3";
+import { PinataSDK } from "pinata";
 import { useEffect, useState, useMemo, useRef } from "react";
 import {
   BaseError,
@@ -17,7 +17,6 @@ import {
 } from "wagmi";
 import { parseEther } from "viem";
 import { mintNFTABI, mintNFTAddress } from "@/constants/ContractAbi";
-import AdBanner from "@/components/AdBanner";
 
 // Inisialisasi Pinata SDK
 const pinata = new PinataSDK({
@@ -143,6 +142,9 @@ export default function Home() {
   const prevIsConfirmed = useRef<boolean>(false);
   const prevTxError = useRef<BaseError | Error | null>(null);
 
+  const [imageFileId, setImageFileId] = useState<string | null>(null);
+  const [metadataFileId, setMetadataFileId] = useState<string | null>(null);
+
   useEffect(() => {
     if (isConfirming && !prevIsConfirming.current) {
       showToast("Transaction is being confirmed...", "info");
@@ -160,9 +162,47 @@ export default function Home() {
           ? txError.shortMessage || txError.message
           : "Transaction Failed";
       showToast(errorMessage, "error");
+      // 🔥 Hapus file dari Pinata jika transaksi gagal
+      (async () => {
+        if (imageFileId) {
+          try {
+            await pinata.files.public.delete([imageFileId]);
+            console.log(
+              `File with ID ${imageFileId} deleted due to transaction failure.`
+            );
+          } catch (deleteError) {
+            console.error(
+              `Failed to delete image with ID ${imageFileId}:`,
+              deleteError
+            );
+          }
+        }
+
+        if (metadataFileId) {
+          try {
+            await pinata.files.public.delete([metadataFileId]);
+            console.log(
+              `File with ID ${metadataFileId} deleted due to transaction failure.`
+            );
+          } catch (deleteError) {
+            console.error(
+              `Failed to delete metadata with ID ${metadataFileId}:`,
+              deleteError
+            );
+          }
+        }
+      })();
+
       prevTxError.current = txError;
     }
-  }, [isConfirming, isConfirmed, txError, showToast]);
+  }, [
+    isConfirming,
+    isConfirmed,
+    txError,
+    imageFileId,
+    metadataFileId,
+    showToast,
+  ]);
 
   // Read contract values for maxSupply and totalSupply
   const { data: maxSupplyData } = useReadContract({
@@ -197,26 +237,29 @@ export default function Home() {
       return null;
     }
 
-    try {
-      // Define NFT metadata
-      const nftName = "Ethereal Entities";
-      const nftDescription =
-        "Ethereal Entities is an NFT collection featuring mystical creatures from another world, combining digital art with spiritual essence. Each entity comes with a unique aura, carrying a mysterious story waiting to be revealed.";
+    let imageCID: string | null = null;
+    let metadataCID: string | null = null;
+    let imageFileId: string | null = null;
+    let metadataFileId: string | null = null;
 
-      // Begin the upload process
+    try {
       setIsUploading(true);
       showToast("Uploading image...", "info");
 
-      // Create an image from a canvas by drawing selected trait images
-      const imageName = `${nftName.replace(/\s+/g, "_")}.png`;
+      // Nama dan deskripsi NFT
+      const nftName = "Ethereal Entities";
+      const nftDescription =
+        "Ethereal Entities is an NFT collection featuring mystical creatures from another world.";
+
+      // 🔥 1. Optimalkan ukuran canvas
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Could not get canvas context");
 
-      canvas.width = 1000;
-      canvas.height = 1000;
+      canvas.width = 150; // 🔥 Ukuran lebih kecil agar file tidak besar
+      canvas.height = 150;
 
-      // Helper function to load and draw an image for a trait onto the canvas
+      // Fungsi untuk load dan menggambar trait pada canvas
       const loadImage = async (trait: TraitType): Promise<void> => {
         if (!selectedTraits[trait]) return;
         return new Promise<void>((resolve, reject) => {
@@ -228,7 +271,6 @@ export default function Home() {
           img.onerror = () =>
             reject(new Error(`Failed to load image for trait ${trait}`));
 
-          // Use custom image from localStorage if the trait starts with "custom-"
           if (selectedTraits[trait].startsWith("custom-")) {
             const dataUrl = localStorage.getItem(selectedTraits[trait]);
             img.src = dataUrl || "";
@@ -238,23 +280,28 @@ export default function Home() {
         });
       };
 
-      // Draw all selected trait images onto the canvas
+      // 🔥 2. Kurangi ukuran gambar dengan PNG-8 jika memungkinkan
       await Promise.all(traits.map((trait) => loadImage(trait)));
 
-      // Convert canvas to a Blob (PNG format)
+      // 🔥 3. Simpan sebagai PNG tetapi tetap lebih kecil
       const blob = await new Promise<Blob | null>((resolve) =>
         canvas.toBlob((b) => resolve(b), "image/png")
       );
       if (!blob) throw new Error("Could not create blob from canvas");
 
-      // Upload the image to Pinata and get the IPFS URL
-      const imageFile = new File([blob], imageName, { type: "image/png" });
-      const imageUploadResponse = await pinata.upload.file(imageFile);
-      const imageCID = imageUploadResponse.IpfsHash;
+      // Upload ke IPFS (Pinata)
+      const imageFile = new File([blob], `${nftName}.png`, {
+        type: "image/png",
+      });
+      const imageUploadResponse = await pinata.upload.public.file(imageFile);
+      imageFileId = imageUploadResponse.id; // Simpan ID file gambar
+      setImageFileId(imageFileId); // Simpan imageFileId di state
+      imageCID = imageUploadResponse.cid; // Simpan CID gambar
       const imageUrl = `https://red-equivalent-hawk-791.mypinata.cloud/ipfs/${imageCID}`;
 
-      // Notify the user and then upload the metadata
       showToast("Uploading metadata...", "info");
+
+      // Metadata NFT
       const metadata = {
         name: nftName,
         description: nftDescription,
@@ -265,33 +312,84 @@ export default function Home() {
         })),
       };
 
-      // Create metadata file and upload to Pinata
+      // Upload Metadata ke IPFS
       const metadataFile = new File(
         [JSON.stringify(metadata, null, 2)],
-        `${nftName.replace(/\s+/g, "_")}.json`,
+        `${nftName}.json`,
         { type: "application/json" }
       );
-      const metadataUploadResponse = await pinata.upload.file(metadataFile);
-      const metadataCID = metadataUploadResponse.IpfsHash;
-      const metadataUri = `ipfs://${metadataCID}`;
-      console.log("Metadata CID:", metadataCID);
+      const metadataUploadResponse = await pinata.upload.public.file(
+        metadataFile
+      );
+      metadataFileId = metadataUploadResponse.id; // Simpan ID file metadata
+      setMetadataFileId(metadataFileId); // Simpan metadataFileId di state
+      metadataCID = metadataUploadResponse.cid; // Simpan CID metadata
 
-      // Finish the upload process
+      const metadataUri = `ipfs://${metadataCID}`;
+
       setIsUploading(false);
 
-      // Execute the mint transaction with the uploaded metadata URI
-      const transaction = await writeContract({
+      // Mint NFT dengan metadata URI
+      writeContract({
         address: mintNFTAddress,
         abi: mintNFTABI,
         functionName: "mint",
         args: [BigInt(1), metadataUri],
-        value: parseEther("5"),
+        value: parseEther("2"),
       });
-      console.log("Transaction:", transaction);
+
       return "Minting successful";
     } catch (error) {
       showToast("Error during NFT minting", "error");
       console.error(error);
+
+      try {
+        if (imageFileId) {
+          showToast("Deleting image from Pinata...", "info");
+          const deleteImageResponse = await pinata.files.public.delete([
+            imageFileId,
+          ]);
+
+          if (
+            deleteImageResponse.length > 0 &&
+            deleteImageResponse[0].status === "success"
+          ) {
+            console.log(`File with ID ${imageFileId} deleted successfully.`);
+            showToast("Image deleted from Pinata", "success");
+          } else {
+            console.error(
+              `Failed to delete image with ID ${imageFileId}:`,
+              deleteImageResponse
+            );
+            showToast("Failed to delete image from Pinata", "error");
+          }
+        }
+
+        if (metadataFileId) {
+          showToast("Deleting metadata from Pinata...", "info");
+          const deleteMetadataResponse = await pinata.files.public.delete([
+            metadataFileId,
+          ]);
+
+          if (
+            deleteMetadataResponse.length > 0 &&
+            deleteMetadataResponse[0].status === "success"
+          ) {
+            console.log(`File with ID ${metadataFileId} deleted successfully.`);
+            showToast("Metadata deleted from Pinata", "success");
+          } else {
+            console.error(
+              `Failed to delete metadata with ID ${metadataFileId}:`,
+              deleteMetadataResponse
+            );
+            showToast("Failed to delete metadata from Pinata", "error");
+          }
+        }
+      } catch (deleteError) {
+        console.error("Error deleting file from Pinata:", deleteError);
+        showToast("Error deleting file from Pinata", "error");
+      }
+
       setIsUploading(false);
       return null;
     }
@@ -310,46 +408,42 @@ export default function Home() {
   }, [selectedTraits, traits]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:bg-gradient-to-br dark:from-gray-900 dark:to-blue-900 transition-colors duration-300">
+    <main
+      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed transition-colors duration-300"
+      style={{ backgroundImage: "url('/assets/background.jpg')" }}
+    >
+      {" "}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-black mt-5">
-          <AdBanner
-            dataAdFormat="auto"
-            dataFullWidthResponsive={true}
-            dataAdSlot="9950972244"
-          />
-        </div>
         {/* Header Section */}
-        <div className="text-center mb-16 space-y-1">
-          <h1 className="text-6xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 bg-clip-text text-transparent animate-gradient mb-4">
+        <div className="text-center mb-5 space-y-1">
+          <h1 className="text-6xl font-extrabold tracking-tight bg-gradient-to-r from-[#98ff99] via-[#3ccf3e] to-[#c6e9c6] bg-clip-text text-transparent animate-gradient mb-4">
             ETHEREAL ENTITIES
           </h1>
           {/* Total Supply Section */}
           <div className="space-y-2">
-            <p className="text-3xl font-extrabold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-center">
-              Total Supply
-            </p>
-
             {/* Progress Bar Container */}
             <div className="relative">
               {/* Animated Background Glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 blur-xl opacity-20 animate-pulse" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#98ff99] via-[#3ccf3e] to-[#c6e9c6] blur-xl opacity-20 animate-pulse" />
 
               {/* Progress Bar */}
-              <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
+              <div className="relative h-4 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden shadow-md">
+                {/* Outer Border Glow */}
+                <div className="absolute inset-0 rounded-full border border-white/10 blur-sm" />
+
+                {/* Progress Bar Inner */}
                 <div
-                  className="h-full bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 transition-all duration-1000 ease-out"
+                  className="h-full rounded-full bg-gradient-to-r from-[#94ec95] via-[#57ec59] to-[#03ec07] shadow-lg transition-all duration-1000 ease-out relative"
                   style={{
                     width: `${Math.min(
                       (Number(totalSupply || 0) / Number(maxSupply || 1)) * 100,
                       100
                     )}%`,
-                    boxShadow: "0 0 15px rgba(96, 165, 250, 0.3)",
                   }}
                 >
                   {/* Animated Stripe Effect */}
                   <div
-                    className="absolute inset-0 bg-[length:30px_30px] opacity-20 animate-progress-stripe"
+                    className="absolute inset-0 bg-[length:40px_40px] opacity-30 animate-progress-stripe"
                     style={{
                       backgroundImage:
                         "linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent)",
@@ -357,13 +451,13 @@ export default function Home() {
                   />
                 </div>
               </div>
+            </div>
 
-              {/* Counter Text */}
-              <div className="mt-3 text-xl font-extrabold text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 bg-clip-text text-center">
-                {totalSupply || 0}
-                <span className="text-gray-400 mx-1">/</span>
-                {maxSupply}
-              </div>
+            {/* Counter Text */}
+            <div className="mt-1 text-xl font-extrabold text-transparent bg-gradient-to-r from-[#98ff99] via-[#3ccf3e] to-[#c6e9c6] bg-clip-text text-center">
+              {totalSupply || 0}
+              <span className="text-gray-400 mx-1">/</span>
+              {maxSupply}
             </div>
           </div>
         </div>
@@ -381,7 +475,7 @@ export default function Home() {
                       px-4 py-2 text-sm font-medium rounded-xl transition-all transform hover:-translate-y-0.5
                       ${
                         activeTraits === item
-                          ? "bg-gradient-to-r from-blue-400 to-purple-500 text-white shadow-lg"
+                          ? "bg-gradient-to-r from-[#98ff99] via-[#6ee7b7] to-[#3ccf3e] text-white shadow-lg"
                           : "text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600"
                       }
                     `}
@@ -445,6 +539,7 @@ export default function Home() {
               </div>
 
               {/* Traits Grid */}
+
               <div className="h-[480px] bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 p-4 overflow-y-auto custom-scrollbar">
                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
                   {listTraits.map((item, index) => (
@@ -517,18 +612,18 @@ export default function Home() {
                 disabled={
                   !isConnected ||
                   !previewImage.length ||
-                  (mintedCount !== undefined && Number(mintedCount) >= 5) ||
+                  (mintedCount !== undefined && Number(mintedCount) >= 20) ||
                   isPending ||
                   isUploading ||
-                  (balanceData && balanceData.value < parseEther("5"))
+                  (balanceData && balanceData.value < parseEther("2"))
                 }
                 className={`px-6 py-3 rounded-xl font-semibold text-white transition-all ${
                   !isConnected ||
                   !previewImage.length ||
-                  (mintedCount && Number(mintedCount) >= 5) ||
+                  (mintedCount && Number(mintedCount) >= 20) ||
                   isPending ||
                   isUploading ||
-                  (balanceData && balanceData.value < parseEther("5"))
+                  (balanceData && balanceData.value < parseEther("2"))
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-blue-600 hover:bg-blue-700"
                 }`}
@@ -544,7 +639,7 @@ export default function Home() {
                     Confirming...
                   </>
                 ) : (
-                  `Mint NFT (${mintedCount || 0}/5)`
+                  `Mint NFT (${mintedCount || 0}/20)`
                 )}
               </button>
             </div>
@@ -559,7 +654,7 @@ export default function Home() {
             >
               <div className="absolute inset-0 rounded-2xl overflow-hidden">
                 <div
-                  className={`absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 opacity-20 ${
+                  className={`absolute inset-0 bg-gradient-to-r from-[#98ff99] via-[#3ccf3e] to-[#c6e9c6] opacity-40 ${
                     isHoveringPreview ? "animate-rotate" : ""
                   }`}
                 />
@@ -582,7 +677,7 @@ export default function Home() {
                 {!traits.some((trait) => selectedTraits[trait]) && (
                   <div className="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-600">
                     <div className="text-center space-y-4 animate-pulse">
-                      <div className="w-24 h-24 mx-auto bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-xl opacity-30" />
+                      <div className="w-24 h-24 mx-auto bg-gradient-to-r from-[#8ce48e] to-[#3ccf3e] rounded-full blur-xl opacity-40" />
                       <p className="font-medium text-lg">
                         Start Creating Your NFT
                       </p>
@@ -592,14 +687,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="bg-black mt-5">
-          <AdBanner
-            dataAdFormat="auto"
-            dataFullWidthResponsive={true}
-            dataAdSlot="5111415395"
-          />
         </div>
       </div>
       <ParticleBackground />
