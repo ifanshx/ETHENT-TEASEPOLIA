@@ -10,7 +10,7 @@ import { defineChain } from "viem";
 export const TeaChain = defineChain({
   id: 10218,
   name: "Tea Sepolia Testnet",
-  nativeCurrency: { name: "Tea Sepolia Testnet", symbol: "$TEA", decimals: 18 },
+  nativeCurrency: { name: "Tea Sepolia Testnet", symbol: "TEA", decimals: 18 },
   rpcUrls: {
     default: { http: ["https://tea-sepolia.g.alchemy.com/public"] },
   },
