@@ -280,18 +280,21 @@ export default function Home() {
         });
       };
 
-      // 🔥 2. Kurangi ukuran gambar dengan PNG-8 jika memungkinkan
       await Promise.all(traits.map((trait) => loadImage(trait)));
 
-      // 🔥 3. Simpan sebagai PNG tetapi tetap lebih kecil
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob((b) => resolve(b), "image/png")
+      // 🔥 2. Simpan ke WEBP (lebih kecil)
+      const blob = await new Promise<Blob>((resolve, reject) =>
+        canvas.toBlob(
+          (b) =>
+            b ? resolve(b) : reject(new Error("Failed to create WEBP blob")),
+          "image/webp",
+          0.8
+        )
       );
-      if (!blob) throw new Error("Could not create blob from canvas");
 
       // Upload ke IPFS (Pinata)
-      const imageFile = new File([blob], `${nftName}.png`, {
-        type: "image/png",
+      const imageFile = new File([blob], `${nftName}.webp`, {
+        type: "image/webp",
       });
       const imageUploadResponse = await pinata.upload.public.file(imageFile);
       imageFileId = imageUploadResponse.id; // Simpan ID file gambar
