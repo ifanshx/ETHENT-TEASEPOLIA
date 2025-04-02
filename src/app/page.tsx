@@ -5,7 +5,7 @@ import { METADATA_TRAITS } from "@/constants/metadata";
 import { useToast } from "@/context/ToastContext";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Dices } from "lucide-react";
-import { PinataSDK } from "pinata";
+// import { PinataSDK } from "pinata";
 import { useEffect, useState, useMemo, useRef } from "react";
 import {
   BaseError,
@@ -19,11 +19,11 @@ import { parseEther } from "viem";
 import { mintNFTABI, mintNFTAddress } from "@/constants/ContractAbi";
 
 // Inisialisasi Pinata SDK
-const pinata = new PinataSDK({
-  pinataJwt:
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJhZGM4OGQ0OC0wMDg4LTRjMmMtOGIxMS01NjRkODQxZTMwYzAiLCJlbWFpbCI6ImlyZmFhbnNob29kaXExOTU0QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiJmNjE4OTRkYzRiNTM3Y2VlZjg4YyIsInNjb3BlZEtleVNlY3JldCI6IjRjNjg1YTIxOWQwM2FiOTAwZWYyMGU1Y2I2MGZhMDRjMzdiODA0ZWE0NWViNDFhZDk1MjM0ZmRiNDkwMThiNjkiLCJleHAiOjE3Njk5NDEwOTZ9.kElikjPEK_-KCZom76QxOroAHEc-2jAmiqBRjrieZJk",
-  pinataGateway: "https://red-equivalent-hawk-791.mypinata.cloud/",
-});
+// const pinata = new PinataSDK({
+//   pinataJwt:
+//     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJhZGM4OGQ0OC0wMDg4LTRjMmMtOGIxMS01NjRkODQxZTMwYzAiLCJlbWFpbCI6ImlyZmFhbnNob29kaXExOTU0QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiJmNjE4OTRkYzRiNTM3Y2VlZjg4YyIsInNjb3BlZEtleVNlY3JldCI6IjRjNjg1YTIxOWQwM2FiOTAwZWYyMGU1Y2I2MGZhMDRjMzdiODA0ZWE0NWViNDFhZDk1MjM0ZmRiNDkwMThiNjkiLCJleHAiOjE3Njk5NDEwOTZ9.kElikjPEK_-KCZom76QxOroAHEc-2jAmiqBRjrieZJk",
+//   pinataGateway: "https://red-equivalent-hawk-791.mypinata.cloud/",
+// });
 
 // Definisi tipe untuk trait
 type TraitType =
@@ -142,8 +142,8 @@ export default function Home() {
   const prevIsConfirmed = useRef<boolean>(false);
   const prevTxError = useRef<BaseError | Error | null>(null);
 
-  const [imageFileId, setImageFileId] = useState<string | null>(null);
-  const [metadataFileId, setMetadataFileId] = useState<string | null>(null);
+  // const [imageFileId, setImageFileId] = useState<string | null>(null);
+  // const [metadataFileId, setMetadataFileId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isConfirming && !prevIsConfirming.current) {
@@ -163,35 +163,36 @@ export default function Home() {
           : "Transaction Failed";
       showToast(errorMessage, "error");
       // 🔥 Hapus file dari Pinata jika transaksi gagal
-      (async () => {
-        if (imageFileId) {
-          try {
-            await pinata.files.public.delete([imageFileId]);
-            console.log(
-              `File with ID ${imageFileId} deleted due to transaction failure.`
-            );
-          } catch (deleteError) {
-            console.error(
-              `Failed to delete image with ID ${imageFileId}:`,
-              deleteError
-            );
-          }
-        }
+      // (async () => {
+      //   if (imageFileId) {
+      //     try {
+      //       await pinata.files.public.delete([imageFileId]);
+      //       console.log(
+      //         `File with ID ${imageFileId} deleted due to transaction failure.`
+      //       );
+      //     } catch (deleteError) {
+      //       console.error(
+      //         `Failed to delete image with ID ${imageFileId}:`,
+      //         deleteError
+      //       );
+      //     }
+      //   }
 
-        if (metadataFileId) {
-          try {
-            await pinata.files.public.delete([metadataFileId]);
-            console.log(
-              `File with ID ${metadataFileId} deleted due to transaction failure.`
-            );
-          } catch (deleteError) {
-            console.error(
-              `Failed to delete metadata with ID ${metadataFileId}:`,
-              deleteError
-            );
-          }
-        }
-      })();
+      //   if (metadataFileId) {
+      //     try {
+      //       await pinata.files.public.delete([metadataFileId]);
+      //       console.log(
+      //         `File with ID ${metadataFileId} deleted due to transaction failure.`
+      //       );
+      //     } catch (deleteError) {
+      //       console.error(
+      //         `Failed to delete metadata with ID ${metadataFileId}:`,
+      //         deleteError
+      //       );
+      //     }
+      //   }
+      // })
+      // ();
 
       prevTxError.current = txError;
     }
@@ -199,8 +200,8 @@ export default function Home() {
     isConfirming,
     isConfirmed,
     txError,
-    imageFileId,
-    metadataFileId,
+    // imageFileId,
+    // metadataFileId,
     showToast,
   ]);
 
