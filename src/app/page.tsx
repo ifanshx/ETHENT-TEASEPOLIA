@@ -231,108 +231,192 @@ export default function Home() {
   });
 
   // Function to mint the NFT
+  // const handleMintNFT = async (): Promise<string | null> => {
+  //   if (!isConnected) {
+  //     showToast("Please connect your wallet first", "error");
+  //     return null;
+  //   }
+
+  //   let imageCID: string | null = null;
+  //   let metadataCID: string | null = null;
+  //   let imageFileId: string | null = null;
+  //   let metadataFileId: string | null = null;
+
+  //   try {
+  //     setIsUploading(true);
+  //     showToast("Uploading image...", "info");
+
+  //     // Nama dan deskripsi NFT
+  //     const nftName = "Ethereal Entities";
+  //     const nftDescription =
+  //       "Ethereal Entities is an NFT collection featuring mystical creatures from another world.";
+
+  //     // 🔥 1. Optimalkan ukuran canvas
+  //     const canvas = document.createElement("canvas");
+  //     const ctx = canvas.getContext("2d");
+  //     if (!ctx) throw new Error("Could not get canvas context");
+
+  //     canvas.width = 150; // 🔥 Ukuran lebih kecil agar file tidak besar
+  //     canvas.height = 150;
+
+  //     // Fungsi untuk load dan menggambar trait pada canvas
+  //     const loadImage = async (trait: TraitType): Promise<void> => {
+  //       if (!selectedTraits[trait]) return;
+  //       return new Promise<void>((resolve, reject) => {
+  //         const img = new Image();
+  //         img.onload = () => {
+  //           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  //           resolve();
+  //         };
+  //         img.onerror = () =>
+  //           reject(new Error(`Failed to load image for trait ${trait}`));
+
+  //         if (selectedTraits[trait].startsWith("custom-")) {
+  //           const dataUrl = localStorage.getItem(selectedTraits[trait]);
+  //           img.src = dataUrl || "";
+  //         } else {
+  //           img.src = `/assets/${trait}/${selectedTraits[trait]}`;
+  //         }
+  //       });
+  //     };
+
+  //     await Promise.all(traits.map((trait) => loadImage(trait)));
+
+  //     // 🔥 2. Simpan ke WEBP (lebih kecil)
+  //     const blob = await new Promise<Blob>((resolve, reject) =>
+  //       canvas.toBlob(
+  //         (b) =>
+  //           b ? resolve(b) : reject(new Error("Failed to create WEBP blob")),
+  //         "image/webp",
+  //         0.8
+  //       )
+  //     );
+
+  //     // Upload ke IPFS (Pinata)
+  //     const imageFile = new File([blob], `${nftName}.webp`, {
+  //       type: "image/webp",
+  //     });
+  //     const imageUploadResponse = await pinata.upload.public.file(imageFile);
+  //     imageFileId = imageUploadResponse.id; // Simpan ID file gambar
+  //     setImageFileId(imageFileId); // Simpan imageFileId di state
+  //     imageCID = imageUploadResponse.cid; // Simpan CID gambar
+  //     const imageUrl = `https://red-equivalent-hawk-791.mypinata.cloud/ipfs/${imageCID}`;
+
+  //     showToast("Uploading metadata...", "info");
+
+  //     // Metadata NFT
+  //     const metadata = {
+  //       name: nftName,
+  //       description: nftDescription,
+  //       image: imageUrl,
+  //       attributes: traits.map((trait) => ({
+  //         trait_type: trait,
+  //         value: selectedTraits[trait] || "None",
+  //       })),
+  //     };
+
+  //     // Upload Metadata ke IPFS
+  //     const metadataFile = new File(
+  //       [JSON.stringify(metadata, null, 2)],
+  //       `${nftName}.json`,
+  //       { type: "application/json" }
+  //     );
+  //     const metadataUploadResponse = await pinata.upload.public.file(
+  //       metadataFile
+  //     );
+  //     metadataFileId = metadataUploadResponse.id; // Simpan ID file metadata
+  //     setMetadataFileId(metadataFileId); // Simpan metadataFileId di state
+  //     metadataCID = metadataUploadResponse.cid; // Simpan CID metadata
+
+  //     const metadataUri = `ipfs://${metadataCID}`;
+
+  //   setIsUploading(false);
+
+  //     // Mint NFT dengan metadata URI
+  //     writeContract({
+  //       address: mintNFTAddress,
+  //       abi: mintNFTABI,
+  //       functionName: "mint",
+  //       args: [BigInt(1), metadataUri],
+  //       value: parseEther("2"),
+  //     });
+
+  //     return "Minting successful";
+  //   } catch (error) {
+  //     showToast("Error during NFT minting", "error");
+  //     console.error(error);
+
+  //     try {
+  //       if (imageFileId) {
+  //         showToast("Deleting image from Pinata...", "info");
+  //         const deleteImageResponse = await pinata.files.public.delete([
+  //           imageFileId,
+  //         ]);
+
+  //         if (
+  //           deleteImageResponse.length > 0 &&
+  //           deleteImageResponse[0].status === "success"
+  //         ) {
+  //           console.log(`File with ID ${imageFileId} deleted successfully.`);
+  //           showToast("Image deleted from Pinata", "success");
+  //         } else {
+  //           console.error(
+  //             `Failed to delete image with ID ${imageFileId}:`,
+  //             deleteImageResponse
+  //           );
+  //           showToast("Failed to delete image from Pinata", "error");
+  //         }
+  //       }
+
+  //       if (metadataFileId) {
+  //         showToast("Deleting metadata from Pinata...", "info");
+  //         const deleteMetadataResponse = await pinata.files.public.delete([
+  //           metadataFileId,
+  //         ]);
+
+  //         if (
+  //           deleteMetadataResponse.length > 0 &&
+  //           deleteMetadataResponse[0].status === "success"
+  //         ) {
+  //           console.log(`File with ID ${metadataFileId} deleted successfully.`);
+  //           showToast("Metadata deleted from Pinata", "success");
+  //         } else {
+  //           console.error(
+  //             `Failed to delete metadata with ID ${metadataFileId}:`,
+  //             deleteMetadataResponse
+  //           );
+  //           showToast("Failed to delete metadata from Pinata", "error");
+  //         }
+  //       }
+  //     } catch (deleteError) {
+  //       console.error("Error deleting file from Pinata:", deleteError);
+  //       showToast("Error deleting file from Pinata", "error");
+  //     }
+
+  //     setIsUploading(false);
+  //     return null;
+  //   }
+  // };
+
   const handleMintNFT = async (): Promise<string | null> => {
     if (!isConnected) {
       showToast("Please connect your wallet first", "error");
       return null;
     }
 
-    let imageCID: string | null = null;
-    let metadataCID: string | null = null;
-    let imageFileId: string | null = null;
-    let metadataFileId: string | null = null;
-
     try {
       setIsUploading(true);
-      showToast("Uploading image...", "info");
+      showToast("Preparing NFT mint with fallback URIs...", "info");
 
-      // Nama dan deskripsi NFT
-      const nftName = "Ethereal Entities";
-      const nftDescription =
-        "Ethereal Entities is an NFT collection featuring mystical creatures from another world.";
+      const metadataUri =
+        "https://red-equivalent-hawk-791.mypinata.cloud/ipfs/bafkreib6i5tbbaszc6d4ty7pizi3uhlkxkhuggzyiek3y3p4nhmqjgeli4";
 
-      // 🔥 1. Optimalkan ukuran canvas
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Could not get canvas context");
-
-      canvas.width = 150; // 🔥 Ukuran lebih kecil agar file tidak besar
-      canvas.height = 150;
-
-      // Fungsi untuk load dan menggambar trait pada canvas
-      const loadImage = async (trait: TraitType): Promise<void> => {
-        if (!selectedTraits[trait]) return;
-        return new Promise<void>((resolve, reject) => {
-          const img = new Image();
-          img.onload = () => {
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            resolve();
-          };
-          img.onerror = () =>
-            reject(new Error(`Failed to load image for trait ${trait}`));
-
-          if (selectedTraits[trait].startsWith("custom-")) {
-            const dataUrl = localStorage.getItem(selectedTraits[trait]);
-            img.src = dataUrl || "";
-          } else {
-            img.src = `/assets/${trait}/${selectedTraits[trait]}`;
-          }
-        });
-      };
-
-      await Promise.all(traits.map((trait) => loadImage(trait)));
-
-      // 🔥 2. Simpan ke WEBP (lebih kecil)
-      const blob = await new Promise<Blob>((resolve, reject) =>
-        canvas.toBlob(
-          (b) =>
-            b ? resolve(b) : reject(new Error("Failed to create WEBP blob")),
-          "image/webp",
-          0.8
-        )
-      );
-
-      // Upload ke IPFS (Pinata)
-      const imageFile = new File([blob], `${nftName}.webp`, {
-        type: "image/webp",
-      });
-      const imageUploadResponse = await pinata.upload.public.file(imageFile);
-      imageFileId = imageUploadResponse.id; // Simpan ID file gambar
-      setImageFileId(imageFileId); // Simpan imageFileId di state
-      imageCID = imageUploadResponse.cid; // Simpan CID gambar
-      const imageUrl = `https://red-equivalent-hawk-791.mypinata.cloud/ipfs/${imageCID}`;
-
-      showToast("Uploading metadata...", "info");
-
-      // Metadata NFT
-      const metadata = {
-        name: nftName,
-        description: nftDescription,
-        image: imageUrl,
-        attributes: traits.map((trait) => ({
-          trait_type: trait,
-          value: selectedTraits[trait] || "None",
-        })),
-      };
-
-      // Upload Metadata ke IPFS
-      const metadataFile = new File(
-        [JSON.stringify(metadata, null, 2)],
-        `${nftName}.json`,
-        { type: "application/json" }
-      );
-      const metadataUploadResponse = await pinata.upload.public.file(
-        metadataFile
-      );
-      metadataFileId = metadataUploadResponse.id; // Simpan ID file metadata
-      setMetadataFileId(metadataFileId); // Simpan metadataFileId di state
-      metadataCID = metadataUploadResponse.cid; // Simpan CID metadata
-
-      const metadataUri = `ipfs://${metadataCID}`;
+      // Jika diperlukan, kamu masih bisa melakukan pembuatan canvas untuk preview
+      // Namun, karena upload ke IPFS tidak diperlukan, kita lewati langkah tersebut
 
       setIsUploading(false);
 
-      // Mint NFT dengan metadata URI
+      // Mint NFT menggunakan metadata URI fallback
       writeContract({
         address: mintNFTAddress,
         abi: mintNFTABI,
@@ -345,54 +429,6 @@ export default function Home() {
     } catch (error) {
       showToast("Error during NFT minting", "error");
       console.error(error);
-
-      try {
-        if (imageFileId) {
-          showToast("Deleting image from Pinata...", "info");
-          const deleteImageResponse = await pinata.files.public.delete([
-            imageFileId,
-          ]);
-
-          if (
-            deleteImageResponse.length > 0 &&
-            deleteImageResponse[0].status === "success"
-          ) {
-            console.log(`File with ID ${imageFileId} deleted successfully.`);
-            showToast("Image deleted from Pinata", "success");
-          } else {
-            console.error(
-              `Failed to delete image with ID ${imageFileId}:`,
-              deleteImageResponse
-            );
-            showToast("Failed to delete image from Pinata", "error");
-          }
-        }
-
-        if (metadataFileId) {
-          showToast("Deleting metadata from Pinata...", "info");
-          const deleteMetadataResponse = await pinata.files.public.delete([
-            metadataFileId,
-          ]);
-
-          if (
-            deleteMetadataResponse.length > 0 &&
-            deleteMetadataResponse[0].status === "success"
-          ) {
-            console.log(`File with ID ${metadataFileId} deleted successfully.`);
-            showToast("Metadata deleted from Pinata", "success");
-          } else {
-            console.error(
-              `Failed to delete metadata with ID ${metadataFileId}:`,
-              deleteMetadataResponse
-            );
-            showToast("Failed to delete metadata from Pinata", "error");
-          }
-        }
-      } catch (deleteError) {
-        console.error("Error deleting file from Pinata:", deleteError);
-        showToast("Error deleting file from Pinata", "error");
-      }
-
       setIsUploading(false);
       return null;
     }
