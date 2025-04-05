@@ -10,7 +10,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import {
   BaseError,
   useAccount,
-  useBalance, // <-- Tambahkan import useBalance
+  useBalance,
   useReadContract,
   useWaitForTransactionReceipt,
   useWriteContract,
@@ -69,7 +69,6 @@ export default function Home() {
   // State untuk trait aktif, list trait, supply, dan status upload
   const [activeTraits, setActiveTraits] = useState<TraitType>("Background");
   const [listTraits, setListTraits] = useState<string[]>([]);
-  const [isHoveringPreview, setIsHoveringPreview] = useState(false);
   const [maxSupply, setMaxSupply] = useState<number | null>(null);
   const [totalSupply, setTotalSupply] = useState<number | null>(null);
   const [selectedTraits, setSelectedTraits] = useState<SelectedTraits>({
@@ -448,287 +447,220 @@ export default function Home() {
   }, [selectedTraits, traits]);
 
   return (
-    <main
-      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed transition-colors duration-300"
-      style={{ backgroundImage: "url('/assets/background.jpg')" }}
-    >
-      {" "}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header Section */}
-        <div className="text-center mb-5 space-y-1">
-          <h1 className="text-6xl font-extrabold tracking-tight bg-gradient-to-r from-[#98ff99] via-[#3ccf3e] to-[#c6e9c6] bg-clip-text text-transparent animate-gradient mb-4">
+    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-900 to-teal-900 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+        {/* Header Section dengan Animasi Text Glow */}
+        <div className="text-center mb-10 space-y-6">
+          <h1 className="text-6xl font-bold tracking-tighter bg-gradient-to-r from-emerald-400 via-teal-400 to-green-400 bg-clip-text text-transparent animate-text-glow">
             ETHEREAL ENTITIES
           </h1>
-          {/* Total Supply Section */}
-          <div className="space-y-2">
-            {/* Progress Bar Container */}
-            <div className="relative">
-              {/* Animated Background Glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-[#98ff99] via-[#3ccf3e] to-[#c6e9c6] blur-xl opacity-20 animate-pulse" />
 
-              {/* Progress Bar */}
-              <div className="relative h-4 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden shadow-md">
-                {/* Outer Border Glow */}
-                <div className="absolute inset-0 rounded-full border border-white/10 blur-sm" />
+          {/* Supply Counter */}
+          <div className="inline-block bg-gradient-to-br from-emerald-900/30 to-teal-900/30 backdrop-blur-xl p-4 rounded-2xl border-2 border-emerald-400/40 shadow-2xl neon-glow transform-gpu transition-all duration-300 hover:scale-[1.02] hover:rotate-[0.5deg] group relative overflow-hidden">
+            {/* Gradient shine effect */}
+            <div className="absolute inset-0 bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-emerald-400/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                {/* Progress Bar Inner */}
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#94ec95] via-[#57ec59] to-[#03ec07] shadow-lg transition-all duration-1000 ease-out relative"
-                  style={{
-                    width: `${Math.min(
-                      (Number(totalSupply || 0) / Number(maxSupply || 1)) * 100,
-                      100
-                    )}%`,
-                  }}
-                >
-                  {/* Animated Stripe Effect */}
-                  <div
-                    className="absolute inset-0 bg-[length:40px_40px] opacity-30 animate-progress-stripe"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent)",
-                    }}
-                  />
-                </div>
-              </div>
+            {/* Floating numbers */}
+            <div className="flex items-center justify-center gap-3 relative">
+              <span className="text-2xl font-mono font-bold bg-gradient-to-r from-emerald-300 to-teal-400 bg-clip-text text-transparent animate-float">
+                {totalSupply || 0}
+              </span>
+
+              {/* Animated separator */}
+              <div className="h-6 w-[2px] bg-gradient-to-b from-emerald-400/80 to-teal-400/80 animate-pulse" />
+
+              <span className="text-2xl font-mono font-bold bg-gradient-to-r from-teal-400 to-emerald-300 bg-clip-text text-transparent animate-float-delay">
+                {maxSupply}
+              </span>
             </div>
 
-            {/* Counter Text */}
-            <div className="mt-1 text-xl font-extrabold text-transparent bg-gradient-to-r from-[#98ff99] via-[#3ccf3e] to-[#c6e9c6] bg-clip-text text-center">
-              {totalSupply || 0}
-              <span className="text-gray-400 mx-1">/</span>
-              {maxSupply}
+            {/* Label with subtle animation */}
+            <div className="mt-1 text-sm font-medium bg-gradient-to-r from-emerald-300/80 to-teal-300/80 bg-clip-text text-transparent tracking-wider animate-text-shimmer">
+              <span className="mr-1">🌟</span>MINTED / TOTAL
+              <span className="ml-1">🌟</span>
+            </div>
+
+            {/* Particle effect */}
+            <div className="absolute inset-0 pointer-events-none">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-1 h-1 bg-emerald-400/30 rounded-full animate-particle"
+                  style={{
+                    top: `${Math.random() * 100}%`,
+                    left: `${Math.random() * 100}%`,
+                    animationDelay: `${i * 0.2}s`,
+                  }}
+                />
+              ))}
             </div>
           </div>
         </div>
-        <div className="flex flex-col-reverse lg:flex-row gap-8">
-          {/* Left Panel */}
-          <div className="flex-1 max-w-2xl">
-            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 border border-gray-100 dark:border-gray-700 transition-all duration-300">
-              {/* Trait Selector */}
-              <div className="hidden md:flex gap-2 mb-6 flex-wrap">
+
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Left Panel - Configuration */}
+          <div className="bg-gray-800/30 backdrop-blur-lg rounded-xl border-2 border-emerald-400/20 shadow-xl p-5">
+            {/* Trait Selection */}
+            <div className="mb-6 space-y-5">
+              {/* Desktop Tabs */}
+              <div className="hidden md:flex flex-wrap gap-2 justify-center">
                 {traits.map((item) => (
                   <button
                     key={item}
                     onClick={() => setActiveTraits(item)}
-                    className={`
-                      px-4 py-2 text-sm font-medium rounded-xl transition-all transform hover:-translate-y-0.5
-                      ${
-                        activeTraits === item
-                          ? "bg-gradient-to-r from-[#98ff99] via-[#6ee7b7] to-[#3ccf3e] text-white shadow-lg"
-                          : "text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600"
-                      }
-                    `}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors
+                ${
+                  activeTraits === item
+                    ? "bg-emerald-600 text-white shadow-md"
+                    : "bg-gray-700/40 text-emerald-200 hover:bg-emerald-700/30"
+                }`}
                   >
                     {item}
                   </button>
                 ))}
               </div>
 
-              {/* Mobile Trait Selector */}
-              <div className="md:hidden block mt-5 mb-6 space-y-2.5">
-                <label
-                  htmlFor="mobile-trait-select"
-                  className="text-[13px] font-semibold text-gray-700/90 uppercase tracking-wider flex items-center"
+              {/* Mobile Dropdown */}
+              <div className="md:hidden">
+                <select
+                  value={activeTraits}
+                  onChange={(e) => setActiveTraits(e.target.value as TraitType)}
+                  className="w-full bg-emerald-900/30 border-2 border-emerald-400/20 rounded-lg p-3 text-emerald-200 text-sm"
                 >
-                  <span className="bg-gradient-to-r from-indigo-600/20 to-blue-400/20 px-2 py-1.5 rounded-l-md border-l-4 border-indigo-500/80 mr-2">
-                    CHARACTER TRAIT
-                  </span>
-                </label>
-                <div className="relative group">
-                  <select
-                    id="mobile-trait-select"
-                    onChange={(e) =>
-                      setActiveTraits(e.target.value as TraitType)
-                    }
-                    value={activeTraits}
-                    className="
-                      w-full pl-5 pr-12 py-3.5 text-[15px] font-medium text-gray-800
-                      bg-white border border-gray-300/80 rounded-xl shadow-sm
-                      focus:outline-none focus:ring-2 focus:ring-indigo-500/80 focus:ring-offset-1
-                      hover:border-indigo-400/90 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] cursor-pointer appearance-none
-                    "
-                  >
-                    {traits.map((item) => (
-                      <option
-                        key={item}
-                        value={item}
-                        className="text-sm font-medium text-gray-700 py-2.5 checked:bg-indigo-50"
-                      >
-                        {item}
-                      </option>
-                    ))}
-                  </select>
-                  {/* Custom Chevron */}
-                  <div className="absolute right-4 top-1/2 -translate-y-1/5 pointer-events-none">
-                    <svg
-                      className="w-5 h-5 text-gray-500/90 group-hover:text-indigo-600 transition-colors"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2.2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
-                </div>
+                  {traits.map((item) => (
+                    <option key={item} value={item} className="bg-gray-900">
+                      {item}
+                    </option>
+                  ))}
+                </select>
               </div>
+            </div>
 
-              {/* Traits Grid */}
-
-              <div className="h-[480px] bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 p-4 overflow-y-auto custom-scrollbar">
-                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+            {/* Traits Grid */}
+            <div className="bg-white/5 rounded-xl border-2 border-purple-400/20 overflow-hidden group">
+              <div className="h-[500px] overflow-y-auto custom-scrollbar p-3">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                   {listTraits.map((item, index) => (
                     <div
                       key={`${activeTraits}-${item}-${index}`}
                       onClick={() => handleSelectTrait(item)}
-                      className={`
-                        group relative aspect-square rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:z-10
-                        ${
-                          selectedTraits[activeTraits] === item
-                            ? "ring-4 ring-blue-400 ring-offset-2 scale-105 shadow-xl"
-                            : "hover:ring-2 hover:ring-blue-200 dark:hover:ring-blue-800"
-                        }
-                        ${
-                          !selectedTraits[activeTraits] ? "animate-fade-in" : ""
-                        }
-                      `}
+                      className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer
+                  transition-all border-2 ${
+                    selectedTraits[activeTraits] === item
+                      ? "border-emerald-500 shadow-lg"
+                      : "border-transparent hover:border-emerald-400/30"
+                  }`}
                     >
                       {selectedTraits[activeTraits] === item && (
-                        <div className="absolute top-2 right-2 bg-blue-400 text-white p-1.5 rounded-full z-10 animate-pop-in">
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2.5"
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
+                        <div className="absolute top-2 right-2 bg-emerald-500 p-1 rounded-full">
+                          <div className="w-2 h-2 bg-white rounded-full" />
                         </div>
                       )}
-                      <div className="relative w-full h-full transform transition-transform duration-300 group-hover:scale-110">
-                        {item.startsWith("custom-") ? (
-                          <img
-                            src={localStorage.getItem(item) || ""}
-                            alt={`Custom ${activeTraits}`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <img
-                            src={`/assets/${activeTraits}/${item}`}
-                            alt={`Trait ${item}`}
-                            className="object-cover"
-                            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                          />
-                        )}
-                      </div>
+                      <img
+                        src={
+                          item.startsWith("custom-")
+                            ? localStorage.getItem(item) || ""
+                            : `/assets/${activeTraits}/${item}`
+                        }
+                        alt={item}
+                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-purple-400/10" />
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 space-y-3 sm:space-y-0">
-              <ConnectButton />
-              <button
-                onClick={handleRandomTraits}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 h-12 px-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-gray-700 dark:text-gray-200 font-medium group"
-              >
-                <Dices className="w-5 h-5 text-blue-400 group-hover:rotate-180 transition-transform" />
-                Randomize
-              </button>
-              <button
-                onClick={handleMintNFT}
-                disabled={
-                  !isConnected ||
-                  !previewImage.length ||
-                  (mintedCount !== undefined && Number(mintedCount) >= 20) ||
-                  isPending ||
-                  isUploading ||
-                  (balanceData && balanceData.value < parseEther("2"))
-                }
-                className={`px-6 py-3 rounded-xl font-semibold text-white transition-all ${
-                  !isConnected ||
-                  !previewImage.length ||
-                  (mintedCount && Number(mintedCount) >= 20) ||
-                  isPending ||
-                  isUploading ||
-                  (balanceData && balanceData.value < parseEther("2"))
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
-              >
-                {isUploading ? (
-                  <>
-                    <div className="w-4 h-4 animate-spin" />
-                    Uploading Assets...
-                  </>
-                ) : isPending ? (
-                  <>
-                    <div className="w-4 h-4 animate-spin" />
-                    Confirming...
-                  </>
-                ) : (
-                  `Mint NFT (${mintedCount || 0}/20)`
-                )}
-              </button>
-            </div>
           </div>
 
-          {/* Right Preview Panel */}
-          <div className="flex-1 lg:max-w-xl">
-            <div
-              className="relative aspect-square bg-gradient-to-br from-gray-50 dark:from-gray-800 to-white dark:to-gray-900 rounded-3xl shadow-2xl border-8 border-white dark:border-gray-800 overflow-hidden transition-all duration-300 transform hover:scale-105 hover:shadow-blue-500/50"
-              onMouseEnter={() => setIsHoveringPreview(true)}
-              onMouseLeave={() => setIsHoveringPreview(false)}
-            >
-              <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                <div
-                  className={`absolute inset-0 bg-gradient-to-r from-[#98ff99] via-[#3ccf3e] to-[#c6e9c6] opacity-40 ${
-                    isHoveringPreview ? "animate-rotate" : ""
-                  }`}
-                />
-              </div>
-              <div className="absolute inset-2 bg-gray-100 dark:bg-gray-900 rounded-2xl overflow-hidden">
-                {traits.map((trait) => {
-                  if (!selectedTraits[trait]) return null;
-                  const src = selectedTraits[trait].startsWith("custom-")
-                    ? localStorage.getItem(selectedTraits[trait]) || ""
-                    : `/assets/${trait}/${selectedTraits[trait]}`;
-                  return (
+          {/* Right Panel - Preview */}
+          <div className="sticky top-6 h-fit bg-gray-800/30 backdrop-blur-lg rounded-xl border-2 border-emerald-400/20 shadow-xl p-5">
+            <div className="aspect-square bg-gray-900/50 rounded-lg border-2 border-emerald-400/20 overflow-hidden relative">
+              {/* Preview Images dengan Animasi */}
+              {traits.map(
+                (trait) =>
+                  selectedTraits[trait] && (
                     <img
                       key={trait}
-                      src={src}
+                      src={
+                        selectedTraits[trait].startsWith("custom-")
+                          ? localStorage.getItem(selectedTraits[trait]) || ""
+                          : `/assets/${trait}/${selectedTraits[trait]}`
+                      }
                       alt={trait}
-                      className="absolute inset-0 object-contain p-4"
+                      className="absolute inset-0 object-contain
+                      transition-transform duration-500 ease-in-out
+                      transform hover:scale-105
+                      w-full h-full p-4 animate-float "
                     />
-                  );
-                })}
-                {!traits.some((trait) => selectedTraits[trait]) && (
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-600">
-                    <div className="text-center space-y-4 animate-pulse">
-                      <div className="w-24 h-24 mx-auto bg-gradient-to-r from-[#8ce48e] to-[#3ccf3e] rounded-full blur-xl opacity-40" />
-                      <p className="font-medium text-lg">
-                        Start Creating Your NFT
-                      </p>
-                    </div>
+                  )
+              )}
+
+              {/* Empty State dengan Animasi */}
+              {!traits.some((trait) => selectedTraits[trait]) && (
+                <div className="w-full h-full flex flex-col items-center justify-center p-6">
+                  <div className="mb-4 w-16 h-16 bg-emerald-400/20 rounded-full flex items-center justify-center animate-spin-slow">
+                    <Dices className="w-8 h-8 text-emerald-400 animate-dance" />
                   </div>
-                )}
-              </div>
+                  <p className="text-emerald-200 text-sm font-medium text-center">
+                    Select traits to preview your NFT
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
+
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-900/90 backdrop-blur-xl rounded-xl p-4 shadow-2xl border-2 border-emerald-400/20 min-w-[480px] max-w-[95vw] neon-glow">
+          <div className="flex items-center gap-4">
+            {/* ... (tombol-tombol) ... */}
+            <ConnectButton />
+
+            <button
+              onClick={handleRandomTraits}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600/50 hover:bg-emerald-600/70 rounded-lg text-emerald-200 transition-colors"
+            >
+              <Dices className="w-5 h-5 text-emerald-400 animate-dance" />
+              Randomize
+            </button>
+
+            <button
+              onClick={handleMintNFT}
+              disabled={
+                !isConnected ||
+                !previewImage.length ||
+                (mintedCount !== undefined && Number(mintedCount) >= 20) ||
+                isPending ||
+                isUploading ||
+                (balanceData && balanceData.value < parseEther("2"))
+              }
+              className={`px-6 py-2.5 rounded-lg font-medium transition-colors ${
+                !isConnected ||
+                !previewImage.length ||
+                (mintedCount && Number(mintedCount) >= 20) ||
+                isPending ||
+                isUploading ||
+                (balanceData && balanceData.value < parseEther("2"))
+                  ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white"
+              }`}
+            >
+              {isUploading || isPending ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
+                  {isUploading ? "Uploading..." : "Confirming..."}
+                </div>
+              ) : (
+                `Mint NFT (${mintedCount || 0}/20)`
+              )}
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Background Elements */}
+      <div className="fixed inset-0 bg-gradient-to-b from-emerald-500/10 to-teal-500/10 opacity-20" />
       <ParticleBackground />
     </main>
   );
