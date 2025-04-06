@@ -4,7 +4,7 @@ import ParticleBackground from "@/components/ParticleBackground";
 import { METADATA_TRAITS } from "@/constants/metadata";
 import { useToast } from "@/context/ToastContext";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Dices } from "lucide-react";
+import { Coins, Dices } from "lucide-react";
 // import { PinataSDK } from "pinata";
 import { useEffect, useState, useMemo, useRef } from "react";
 import {
@@ -17,6 +17,7 @@ import {
 } from "wagmi";
 import { parseEther } from "viem";
 import { mintNFTABI, mintNFTAddress } from "@/constants/ContractAbi";
+import Link from "next/link";
 
 // Inisialisasi Pinata SDK
 // const pinata = new PinataSDK({
@@ -614,8 +615,15 @@ export default function Home() {
 
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-900/90 backdrop-blur-xl rounded-xl p-4 shadow-2xl border-2 border-emerald-400/20 min-w-[480px] max-w-[95vw] neon-glow">
           <div className="flex items-center gap-4">
-            {/* ... (tombol-tombol) ... */}
             <ConnectButton />
+
+            {/* Tombol Stake */}
+            <Link href="/stake" className="flex-1">
+              <button className="w-full flex items-center gap-2 px-4 py-2 bg-purple-600/50 hover:bg-purple-600/70 rounded-lg text-purple-200 transition-colors">
+                <Coins className="w-5 h-5 text-purple-300" />
+                Stake NFT
+              </button>
+            </Link>
 
             <button
               onClick={handleRandomTraits}

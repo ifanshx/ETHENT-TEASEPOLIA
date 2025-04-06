@@ -8,17 +8,17 @@ import React, { useState } from "react";
 const StakePage = () => {
   const [activeTab, setActiveTab] = useState<"owned" | "staked">("owned");
   const [nfts] = useState(
-    [...Array(50)].map((_, i) => ({
+    [...Array(20)].map((_, i) => ({
       id: String(i + 1),
-      image: `/assets/Background/Daylight.png`,
+      image: `/assets/rabbits.png`,
       name: `NFT #${i + 1}`,
     }))
   );
 
   const [stakedNFTs] = useState(
-    [...Array(10)].map((_, i) => ({
+    [...Array(20)].map((_, i) => ({
       id: String(i + 51),
-      image: `/assets/Background/Daylight.png`,
+      image: `/assets/rabbits.png`,
       name: `Staked #${i + 51}`,
     }))
   );
@@ -27,30 +27,30 @@ const StakePage = () => {
   const [selectedToUnstake, setSelectedToUnstake] = useState<string[]>([]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#fff5f5] via-[#f0f9ff] to-[#fdf2f8]">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-900 to-teal-900">
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header Compact */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 sticky top-0 bg-white/80 backdrop-blur-sm z-20 py-4">
-          <h1 className="text-3xl font-bold text-pink-500">
-            🪐 Cosmic Staking
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 sticky top-0 bg-gray-800/80 backdrop-blur-sm z-20 p-3 rounded-xl border-2 border-emerald-400/20">
+          <h1 className="text-3xl font-bold tracking-tighter bg-gradient-to-r from-emerald-400 via-teal-400 to-green-400 bg-clip-text text-transparent animate-text-glow">
+            🍵 Ethereal Staking
           </h1>
           <div className="flex gap-4">
             <button
               onClick={() => setActiveTab("owned")}
-              className={`px-6 py-2 rounded-full ${
+              className={`px-6 py-2 rounded-full transition-all ${
                 activeTab === "owned"
-                  ? "bg-pink-400 text-white"
-                  : "bg-white text-pink-400 border border-pink-200"
+                  ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg"
+                  : "bg-gray-700/40 text-emerald-300 border-2 border-emerald-400/20 hover:border-emerald-400/40"
               }`}
             >
               Your NFTs ({nfts.length})
             </button>
             <button
               onClick={() => setActiveTab("staked")}
-              className={`px-6 py-2 rounded-full ${
+              className={`px-6 py-2 rounded-full transition-all ${
                 activeTab === "staked"
-                  ? "bg-blue-400 text-white"
-                  : "bg-white text-blue-400 border border-blue-200"
+                  ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-lg"
+                  : "bg-gray-700/40 text-teal-300 border-2 border-teal-400/20 hover:border-teal-400/40"
               }`}
             >
               Staked ({stakedNFTs.length})
@@ -62,21 +62,21 @@ const StakePage = () => {
         <div className="grid lg:grid-cols-4 gap-8">
           {/* NFT List Section */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl shadow-sm p-4">
+            <div className="bg-gray-800/80 rounded-2xl shadow-xl p-4 border-2 border-emerald-400/20 backdrop-blur-sm">
               {/* List Header */}
               <div className="flex justify-between items-center mb-4 px-2">
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-xl font-semibold text-emerald-400">
                   {activeTab === "owned"
-                    ? "🌌 Your Collection"
-                    : "⭐ Active Stakes"}
+                    ? "🌿 Your Collection"
+                    : "🌟 Active Stakes"}
                 </h2>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     placeholder="Search..."
-                    className="px-4 py-2 border rounded-full text-sm w-40"
+                    className="px-4 py-2 border-2 border-emerald-400/30 rounded-full text-sm w-40 bg-gray-700/40 text-emerald-200 placeholder-emerald-400/60"
                   />
-                  <select className="px-4 py-2 border rounded-full text-sm">
+                  <select className="px-4 py-2 border-2 border-emerald-400/30 rounded-full text-sm bg-gray-700/40 text-emerald-200">
                     <option>Sort by Newest</option>
                     <option>Sort by Value</option>
                   </select>
@@ -121,22 +121,22 @@ const StakePage = () => {
           {/* Sidebar Actions */}
           <div className="lg:col-span-1 space-y-6 sticky top-20 h-fit">
             {/* Selection Summary */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h3 className="font-semibold mb-4">
+            <div className="bg-gray-800/80 rounded-2xl shadow-xl p-6 border-2 border-emerald-400/20 backdrop-blur-sm">
+              <h3 className="font-semibold mb-4 text-emerald-400">
                 {activeTab === "owned"
                   ? "🚀 Staking Ready"
                   : "🌟 Active Stakes"}
               </h3>
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center text-emerald-300">
                   <span>Selected:</span>
-                  <span className="font-bold text-pink-500">
+                  <span className="font-bold text-emerald-400">
                     {activeTab === "owned"
                       ? selectedToStake.length
                       : selectedToUnstake.length}
                   </span>
                 </div>
-                <button className="w-full bg-gradient-to-r from-pink-400 to-purple-400 text-white py-3 rounded-xl hover:scale-[1.02] transition-transform">
+                <button className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-3 rounded-xl hover:scale-[1.02] transition-transform shadow-lg hover:shadow-emerald-500/20">
                   {activeTab === "owned"
                     ? "Stake Selected"
                     : "Unstake Selected"}
@@ -145,11 +145,13 @@ const StakePage = () => {
             </div>
 
             {/* Rewards Summary */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h3 className="font-semibold mb-4">✨ Your Rewards</h3>
+            <div className="bg-gray-800/80 rounded-2xl shadow-xl p-6 border-2 border-emerald-400/20 backdrop-blur-sm">
+              <h3 className="font-semibold mb-4 text-emerald-400">
+                ✨ Your Rewards
+              </h3>
               <div className="space-y-4">
-                <div className="text-3xl font-bold text-blue-500">1,234.56</div>
-                <button className="w-full bg-gradient-to-r from-blue-400 to-purple-400 text-white py-3 rounded-xl hover:scale-[1.02] transition-transform">
+                <div className="text-3xl font-bold text-teal-400">1,234.56</div>
+                <button className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 text-white py-3 rounded-xl hover:scale-[1.02] transition-transform shadow-lg hover:shadow-teal-500/20">
                   Claim All Rewards
                 </button>
               </div>
