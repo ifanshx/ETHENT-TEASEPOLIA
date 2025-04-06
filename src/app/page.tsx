@@ -4,7 +4,7 @@ import ParticleBackground from "@/components/ParticleBackground";
 import { METADATA_TRAITS } from "@/constants/metadata";
 import { useToast } from "@/context/ToastContext";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Coins, Dices } from "lucide-react";
+import { Coins, Dices, Menu, MenuIcon, Sparkles } from "lucide-react";
 // import { PinataSDK } from "pinata";
 import { useEffect, useState, useMemo, useRef } from "react";
 import {
@@ -449,7 +449,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-900 to-teal-900 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+      <div className="max-w-10xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative z-10">
         {/* Header Section dengan Animasi Text Glow */}
         <div className="text-center mb-10 space-y-6">
           <h1 className="text-6xl font-bold tracking-tighter bg-gradient-to-r from-emerald-400 via-teal-400 to-green-400 bg-clip-text text-transparent animate-text-glow">
@@ -613,56 +613,82 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-900/90 backdrop-blur-xl rounded-xl p-4 shadow-2xl border-2 border-emerald-400/20 min-w-[480px] max-w-[95vw] neon-glow">
-          <div className="flex items-center gap-4">
-            <ConnectButton />
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-emerald-900/90 backdrop-blur-xl rounded-xl p-2 shadow-2xl border-2 border-emerald-400/20 w-[100vw] max-w-[570px] neon-glow transition-all duration-300">
+          <div className="flex items-center gap-4 justify-between">
+            {/* Wallet Connect Button (Responsive) */}
+            <div className="min-w-[120px]">
+              <ConnectButton showBalance={false} />
+            </div>
 
-            {/* Tombol Stake */}
-            <Link href="/stake" className="flex-1">
-              <button className="w-full flex items-center gap-2 px-4 py-2 bg-purple-600/50 hover:bg-purple-600/70 rounded-lg text-purple-200 transition-colors">
-                <Coins className="w-5 h-5 text-purple-300" />
-                Stake NFT
-              </button>
-            </Link>
-
-            <button
-              onClick={handleRandomTraits}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600/50 hover:bg-emerald-600/70 rounded-lg text-emerald-200 transition-colors"
-            >
-              <Dices className="w-5 h-5 text-emerald-400 animate-dance" />
-              Randomize
-            </button>
-
-            <button
-              onClick={handleMintNFT}
-              disabled={
-                !isConnected ||
-                !previewImage.length ||
-                (mintedCount !== undefined && Number(mintedCount) >= 20) ||
-                isPending ||
-                isUploading ||
-                (balanceData && balanceData.value < parseEther("2"))
-              }
-              className={`px-6 py-2.5 rounded-lg font-medium transition-colors ${
-                !isConnected ||
-                !previewImage.length ||
-                (mintedCount && Number(mintedCount) >= 20) ||
-                isPending ||
-                isUploading ||
-                (balanceData && balanceData.value < parseEther("2"))
-                  ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
-                  : "bg-emerald-600 hover:bg-emerald-700 text-white"
-              }`}
-            >
-              {isUploading || isPending ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
-                  {isUploading ? "Uploading..." : "Confirming..."}
+            {/* Action Buttons Group */}
+            <div className="flex items-center gap-1 sm:gap-2">
+              {/* Randomize Button */}
+              <button
+                onClick={handleRandomTraits}
+                className="p-2 sm:px-4 sm:py-2 bg-emerald-600/50 hover:bg-emerald-600/70 rounded-lg sm:rounded-xl text-emerald-200 transition-all duration-300 active:scale-95"
+              >
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <Dices className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400  animate-dance" />
+                  <span className=" sm:inline text-xs sm:text-base">
+                    Random
+                  </span>
                 </div>
-              ) : (
-                `Mint NFT (${mintedCount || 0}/20)`
-              )}
-            </button>
+              </button>
+
+              {/* Stake Button */}
+              <Link href="/stake" className="flex-1">
+                <button className="p-2 sm:px-4 sm:py-2 bg-purple-600/50 hover:bg-purple-600/70 rounded-lg sm:rounded-xl text-purple-200 transition-all duration-300 active:scale-95">
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-purple-300  animate-dance" />
+                    <span className=" sm:inline text-xs sm:text-base">
+                      Stake
+                    </span>
+                  </div>
+                </button>
+              </Link>
+
+              {/* Mint Button */}
+              <button
+                onClick={handleMintNFT}
+                disabled={
+                  !isConnected ||
+                  !previewImage.length ||
+                  (mintedCount !== undefined && Number(mintedCount) >= 20) ||
+                  isPending ||
+                  isUploading ||
+                  (balanceData && balanceData.value < parseEther("2"))
+                }
+                className={`p-2 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl transition-all duration-300 ${
+                  !isConnected ||
+                  !previewImage.length ||
+                  (mintedCount && Number(mintedCount) >= 20) ||
+                  isPending ||
+                  isUploading ||
+                  (balanceData && balanceData.value < parseEther("2"))
+                    ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
+                    : "bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95"
+                }`}
+              >
+                {isUploading || isPending ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
+                    <span className=" sm:inline text-xs sm:text-base">
+                      {isUploading ? "Upload" : "Confirm"}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300  animate-dance" />
+                    <span className=" sm:inline text-xs sm:text-base">
+                      Mint
+                    </span>
+                    <span className="text-xs sm:text-base text-emerald-200/80">
+                      ({mintedCount || 0}/20)
+                    </span>
+                  </div>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

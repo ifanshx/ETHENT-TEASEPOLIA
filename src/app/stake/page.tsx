@@ -31,10 +31,10 @@ const StakePage = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-900 to-teal-900">
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header Compact */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 sticky top-0 bg-gray-800/80 backdrop-blur-sm z-20 p-3 rounded-xl border-2 border-emerald-400/20">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 sticky top-1 bg-gray-800/80 backdrop-blur-sm z-20 p-3 rounded-xl border-2 border-emerald-400/20">
           <Link href="/" className="flex-1">
             <h1 className="text-3xl font-bold tracking-tighter bg-gradient-to-r from-emerald-400 via-teal-400 to-green-400 bg-clip-text text-transparent animate-text-glow">
-              🍵 Ethereal Staking
+              🍵 Ethereal Entities
             </h1>
           </Link>
           <div className="flex gap-4">
@@ -67,8 +67,8 @@ const StakePage = () => {
           <div className="lg:col-span-3">
             <div className="bg-gray-800/80 rounded-2xl shadow-xl p-4 border-2 border-emerald-400/20 backdrop-blur-sm">
               {/* List Header */}
-              <div className="flex justify-between items-center mb-4 px-2">
-                <h2 className="text-xl font-semibold text-emerald-400">
+              <div className="flex justify-between items-center mb-4 px-2 ">
+                <h2 className="text-xl font-semibold text-emerald-400 ">
                   {activeTab === "owned"
                     ? "🌿 Your Collection"
                     : "🌟 Active Stakes"}
