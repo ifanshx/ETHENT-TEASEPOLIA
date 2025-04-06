@@ -3,6 +3,7 @@
 
 import NFTCard from "@/components/NFTCard";
 import StakeCard from "@/components/StakeCard";
+import Link from "next/link";
 import React, { useState } from "react";
 
 const StakePage = () => {
@@ -31,9 +32,11 @@ const StakePage = () => {
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header Compact */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 sticky top-0 bg-gray-800/80 backdrop-blur-sm z-20 p-3 rounded-xl border-2 border-emerald-400/20">
-          <h1 className="text-3xl font-bold tracking-tighter bg-gradient-to-r from-emerald-400 via-teal-400 to-green-400 bg-clip-text text-transparent animate-text-glow">
-            🍵 Ethereal Staking
-          </h1>
+          <Link href="/" className="flex-1">
+            <h1 className="text-3xl font-bold tracking-tighter bg-gradient-to-r from-emerald-400 via-teal-400 to-green-400 bg-clip-text text-transparent animate-text-glow">
+              🍵 Ethereal Staking
+            </h1>
+          </Link>
           <div className="flex gap-4">
             <button
               onClick={() => setActiveTab("owned")}
