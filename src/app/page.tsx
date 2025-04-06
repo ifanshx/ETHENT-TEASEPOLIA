@@ -4,7 +4,7 @@ import ParticleBackground from "@/components/ParticleBackground";
 import { METADATA_TRAITS } from "@/constants/metadata";
 import { useToast } from "@/context/ToastContext";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Coins, Dices, Menu, MenuIcon, Sparkles } from "lucide-react";
+import { Coins, Dices, Sparkles } from "lucide-react";
 // import { PinataSDK } from "pinata";
 import { useEffect, useState, useMemo, useRef } from "react";
 import {
