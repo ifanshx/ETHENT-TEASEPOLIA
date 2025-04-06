@@ -613,10 +613,10 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="fixed bottom-4  left-1/2 -translate-x-1/2 bg-emerald-900/90 backdrop-blur-xl rounded-xl p-2 shadow-2xl border-2 border-emerald-400/20 w-[95vw] max-w-[570px] neon-glow transition-all duration-300">
+        <div className="fixed bottom-4  left-1/2 -translate-x-1/2 bg-emerald-900/90 backdrop-blur-xl rounded-xl p-2 shadow-2xl border-2 border-emerald-400/20 w-[95vw] max-w-[573px] neon-glow transition-all duration-300">
           <div className="flex items-center gap-4 justify-between">
             {/* Wallet Connect Button (Responsive) */}
-            <div className="min-w-[120px]">
+            <div className="min-w-[90px]">
               <ConnectButton showBalance={false} />
             </div>
 
