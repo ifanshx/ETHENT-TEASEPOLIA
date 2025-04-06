@@ -7,7 +7,7 @@ import React, { useState } from "react";
 
 const StakePage = () => {
   const [activeTab, setActiveTab] = useState<"owned" | "staked">("owned");
-  const [nfts, setNFTs] = useState(
+  const [nfts] = useState(
     [...Array(50)].map((_, i) => ({
       id: String(i + 1),
       image: `/assets/Background/Daylight.png`,
@@ -15,7 +15,7 @@ const StakePage = () => {
     }))
   );
 
-  const [stakedNFTs, setStakedNFTs] = useState(
+  const [stakedNFTs] = useState(
     [...Array(10)].map((_, i) => ({
       id: String(i + 51),
       image: `/assets/Background/Daylight.png`,
