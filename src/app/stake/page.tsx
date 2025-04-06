@@ -12,7 +12,7 @@ const StakePage = () => {
     [...Array(20)].map((_, i) => ({
       id: String(i + 1),
       image: `/assets/rabbits.png`,
-      name: `NFT #${i + 1}`,
+      name: `Ethereal Entities`,
     }))
   );
 
@@ -20,7 +20,7 @@ const StakePage = () => {
     [...Array(20)].map((_, i) => ({
       id: String(i + 51),
       image: `/assets/rabbits.png`,
-      name: `Staked #${i + 51}`,
+      name: `Ethereal Entities `,
     }))
   );
 

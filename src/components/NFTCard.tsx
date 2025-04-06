@@ -70,7 +70,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft, isSelected, onSelect }) => {
 
       {isSelected && (
         <div className="absolute inset-0 bg-emerald-400/10 flex items-center justify-center z-20">
-          <div className="w-8 h-8 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full flex items-center justify-center text-white shadow-lg transform transition-transform duration-300 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] scale-100">
+          <div className=" animate-dance w-8 h-8 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full flex items-center justify-center text-white shadow-lg transform transition-transform duration-300 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] scale-100">
             ✓
           </div>
         </div>
