@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef, CSSProperties } from "react";
 import {
-  XCircleIcon,
+  BellAlertIcon,
   CheckCircleIcon,
-  AlertTriangleIcon,
-  InfoIcon,
-} from "lucide-react";
+  InformationCircleIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
+import { useEffect, useState, useRef, CSSProperties } from "react";
 
 interface ToastProps {
   message: string;
@@ -68,8 +68,8 @@ const Toast: React.FC<ToastProps> = ({
   const icons = {
     success: <CheckCircleIcon className="w-6 h-6" />,
     error: <XCircleIcon className="w-6 h-6" />,
-    warning: <AlertTriangleIcon className="w-6 h-6" />,
-    info: <InfoIcon className="w-6 h-6" />,
+    warning: <BellAlertIcon className="w-6 h-6" />,
+    info: <InformationCircleIcon className="w-6 h-6" />,
   };
 
   // Styles for the progress bar

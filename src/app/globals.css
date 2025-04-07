@@ -1,508 +1,142 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-html {
-  scroll-behavior: smooth;
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
 }
 
-::-webkit-scrollbar {
-  width: 12px; /* Lebar scrollbar */
-  height: 12px; /* Untuk scrollbar horizontal */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f1f1; /* Warna latar belakang track */
-  border-radius: 10px;
-  margin: 2px; /* Memberi jarak antar scrollbar dan konten */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  background: #94ccff;
-  border-radius: 10px;
-  border: 3px solid #f1f1f1; /* Memberikan efek outline yang lebih modern */
-  transition: background-color 0.3s ease, transform 0.2s ease; /* Animasi saat hover */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #357ab7;
-  transform: scale(1.1); /* Menambahkan efek zoom saat hover */
+@keyframes sparkle {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
 }
 
-::-webkit-scrollbar-button {
-  background: transparent;
-}
-
-::-webkit-scrollbar-corner {
-  background: transparent;
+.animate-sparkle {
+  animation: sparkle 1.5s infinite;
 }
 
 @layer utilities {
-  .min-h-screen {
-    min-height: 100vh; /* Fallback */
-    min-height: 100dvh;
+  /* Float Animation */
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
   }
-  .h-screen {
-    height: 100vh; /* Fallback */
-    height: 100dvh;
+
+  /* Slow Spin */
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 2s linear infinite;
   }
 }
 
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
+@layer utilities {
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  50% {
-    background-position: 100% 50%;
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
   }
-  100% {
-    background-position: 0% 50%;
+
+  @keyframes gradientPulse {
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .animate-gradient-pulse {
+    background-size: 200% 200%;
+    animation: gradientPulse 6s ease infinite;
   }
 }
 
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
+@layer components {
+  .animate-menu-item {
+    @apply transition-colors duration-200 ease-out;
   }
-  to {
-    transform: rotate(360deg);
-  }
-}
 
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
+  .animate-wallet-pulse {
+    animation: wallet-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
-  50% {
-    transform: translateY(-20px);
-  }
-}
 
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: gradient 8s ease infinite;
-}
-
-.animate-rotate {
-  animation: rotate 12s linear infinite;
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-gray-800 rounded-full;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-gradient-to-b from-blue-300 to-purple-400 rounded-full;
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-gradient-to-b from-blue-600 to-purple-700;
-}
-
-@keyframes progress-stripe {
-  from {
-    background-position: 0 0;
+  @keyframes wallet-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
   }
-  to {
-    background-position: 30px 0;
-  }
-}
-
-@keyframes pulse-glow {
-  0% {
-    opacity: 0.2;
-  }
-  50% {
-    opacity: 0.4;
-  }
-  100% {
-    opacity: 0.2;
-  }
-}
-
-.animate-progress-stripe {
-  animation: progress-stripe 1s linear infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes glow-aura {
-  0% {
-    opacity: 0.2;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.1);
-  }
-  100% {
-    opacity: 0.2;
-    transform: scale(1);
-  }
-}
-.animate-glow-aura {
-  animation: glow-aura 3s infinite alternate ease-in-out;
-}
-
-@keyframes ripple {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1.5);
-    opacity: 0;
-  }
-}
-.animate-ripple {
-  animation: ripple 2s infinite ease-out;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
-}
-
-@keyframes gradient-x {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.animate-gradient-x {
-  background-size: 200% 200%;
-  animation: gradient-x 6s ease infinite;
-}
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-20px) rotate(5deg);
-  }
-}
-
-@keyframes glow {
-  0%,
-  100% {
-    box-shadow: 0 0 15px -3px rgba(165, 180, 252, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 25px -3px rgba(165, 180, 252, 0.5);
-  }
-}
-
-@keyframes text-glow {
-  0%,
-  100% {
-    text-shadow: 0 0 10px rgba(192, 132, 252, 0.3);
-  }
-  50% {
-    text-shadow: 0 0 20px rgba(192, 132, 252, 0.5);
-  }
-}
-
-@keyframes progress-glow {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.8;
-  }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.shadow-glow {
-  animation: glow 3s ease-in-out infinite;
-}
-
-.shadow-glow-inner {
-  box-shadow: 0 0 15px rgba(192, 132, 252, 0.3);
-}
-
-.animate-text-glow {
-  animation: text-glow 3s ease-in-out infinite;
-}
-
-.animate-progress-glow {
-  animation: progress-glow 2s ease-in-out infinite;
-}
-
-@keyframes gradient-flow {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.animate-gradient-flow {
-  background-size: 200% 200%;
-  animation: gradient-flow 8s ease infinite;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #0ea5e9;
-  border-radius: 4px;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-.perspective-1000 {
-  perspective: 1000px;
-}
-
-@keyframes gradient-flow {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.animate-gradient-flow {
-  background-size: 200% 200%;
-  animation: gradient-flow 8s ease infinite;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #0ea5e9;
-  border-radius: 4px;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-.perspective-1000 {
-  perspective: 1000px;
-}
-@keyframes text-glow {
-  0%,
-  100% {
-    text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
-  }
-  50% {
-    text-shadow: 0 0 20px rgba(5, 150, 105, 0.8);
-  }
-}
-.animate-text-glow {
-  animation: text-glow 2s ease-in-out infinite;
-}
-
-.neon-glow {
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3), 0 0 40px rgba(5, 150, 105, 0.2),
-    0 0 60px rgba(5, 150, 105, 0.1);
-}
-
-@keyframes dance {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(15deg);
-  }
-  75% {
-    transform: rotate(-15deg);
-  }
-}
-.animate-dance {
-  animation: dance 1s ease-in-out infinite;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #10b981, #059669);
-  border-radius: 10px;
-}
-
-@keyframes leaf-float {
-  0% {
-    transform: translateY(0) rotate(-3deg) scale(1);
-    filter: brightness(1);
-  }
-  25% {
-    transform: translateY(-8px) rotate(2deg) scale(1.05);
-    filter: brightness(1.1);
-  }
-  50% {
-    transform: translateY(-12px) rotate(5deg) scale(1.08);
-    filter: brightness(1.05);
-  }
-  75% {
-    transform: translateY(-6px) rotate(-2deg) scale(1.03);
-    filter: brightness(1.07);
-  }
-  100% {
-    transform: translateY(0) rotate(-3deg) scale(1);
-    filter: brightness(1);
-  }
-}
-.animate-leaf-float {
-  animation: leaf-float 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite,
-    leaf-glow 2s ease-in-out infinite alternate;
-}
-
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-.animate-spin-slow {
-  animation: spin-slow 8s linear infinite;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
-  }
-}
-
-@keyframes float-delay {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(3px);
-  }
-}
-
-@keyframes text-shimmer {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes particle {
-  0% {
-    transform: translateY(0) scale(1);
-    opacity: 0.3;
-  }
-  100% {
-    transform: translateY(-20px) scale(0.5);
-    opacity: 0;
-  }
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-float-delay {
-  animation: float 3s ease-in-out infinite 0.5s;
-}
-
-.animate-text-shimmer {
-  background-size: 200% auto;
-  animation: text-shimmer 2s linear infinite;
-}
-
-.animate-particle {
-  animation: particle 1.5s ease-out forwards;
-}
-
-.neon-glow {
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.3), 0 0 30px rgba(5, 150, 105, 0.2),
-    0 0 45px rgba(5, 150, 105, 0.1);
-  transition: box-shadow 0.3s ease;
-}
-
-.neon-glow:hover {
-  box-shadow: 0 0 25px rgba(16, 185, 129, 0.4), 0 0 40px rgba(5, 150, 105, 0.3),
-    0 0 55px rgba(5, 150, 105, 0.2);
-}
-
-@keyframes rotate-border {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-rotate-border {
-  animation: rotate-border 3s linear infinite;
 }

@@ -4,7 +4,6 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
-
 import { defineChain } from "viem";
 
 export const TeaChain = defineChain({
@@ -17,32 +16,31 @@ export const TeaChain = defineChain({
   blockExplorers: {
     default: { name: "Tea Sepolia Testnet", url: "https://sepolia.tea.xyz" },
   },
+  iconUrl: "/tea.svg",
   contracts: {},
 });
+
 const config = getDefaultConfig({
   appName: "Ethereal Entities",
   projectId: "438077850ac125b34cddf29c451af227",
   chains: [TeaChain],
-  ssr: true, // If your dApp uses server side rendering (SSR)
+  ssr: true,
 });
 
 const queryClient = new QueryClient();
 
-function ContextProvider({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
-        <WagmiProvider config={config}>
-          <QueryClientProvider client={queryClient}>
-            <RainbowKitProvider>{children} </RainbowKitProvider>
-          </QueryClientProvider>
-        </WagmiProvider>
-      </body>
-    </html>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider
+          coolMode
+          showRecentTransactions={true}
+          modalSize="compact"
+        >
+          {children}
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
-export default ContextProvider;

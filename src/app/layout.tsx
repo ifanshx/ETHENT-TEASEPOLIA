@@ -1,11 +1,14 @@
+import { Providers } from "./providers";
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import ContextProvider from "@/context";
 import { ToastProvider } from "@/context/ToastContext";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Ethereal Entities",
-  description: "Ethereal Entities",
+  description: "Ethereal Entities Dashboard",
 };
 
 export default function RootLayout({
@@ -15,12 +18,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-      </head>
-      <body>
-        <ContextProvider>
+      <body className={inter.className}>
+        <Providers>
           <ToastProvider>{children}</ToastProvider>
-        </ContextProvider>
+        </Providers>
       </body>
     </html>
   );
