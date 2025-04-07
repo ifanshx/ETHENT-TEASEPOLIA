@@ -535,7 +535,7 @@ const GenerateImagePage = () => {
             </nav>
             {/* Traits Grid */}
             <div className="bg-gray-50  rounded-xl border border-gray-200 overflow-hidden">
-              <div className="h-[350px] overflow-y-auto p-3 custom-scrollbar">
+              <div className="h-[450px] overflow-y-auto p-3 custom-scrollbar">
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                   {listTraits.map((item) => (
                     <button
