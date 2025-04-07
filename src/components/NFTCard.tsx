@@ -67,7 +67,7 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft, index = 0 }) => {
           <div>
             <p className="text-sm text-gray-600">Price</p>
             <p className="text-purple-600 font-bold">
-              {nft.price?.toFixed(2) || (0.05 + idNumber * 0.01).toFixed(2)} TEA
+              {nft.price?.toFixed(1) || (100 + idNumber * 20).toFixed(2)} TEA
             </p>
           </div>
           <button

@@ -7,7 +7,7 @@ const GalleryCard = () => {
       id: `${i + 1}`,
       image: "/assets/EtherealEntities.png",
       name: "Ethereal Entities",
-      price: Math.random() * 1, // Mengubah 'value' menjadi 'price' untuk konsistensi dengan NFTCard
+      price: Math.random() * 100, // Mengubah 'value' menjadi 'price' untuk konsistensi dengan NFTCard
     }));
 
   return (
