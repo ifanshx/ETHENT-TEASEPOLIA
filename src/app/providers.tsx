@@ -11,7 +11,11 @@ export const TeaChain = defineChain({
   name: "Tea Sepolia Testnet",
   nativeCurrency: { name: "Tea Sepolia Testnet", symbol: "TEA", decimals: 18 },
   rpcUrls: {
-    default: { http: ["https://tea-sepolia.g.alchemy.com/public"] },
+    default: {
+      http: [
+        "https://tea-sepolia.g.alchemy.com/v2/3l6Bfa41Ys1M65b-CnMk1NwWDCtH_Yfv",
+      ],
+    },
   },
   blockExplorers: {
     default: { name: "Tea Sepolia Testnet", url: "https://sepolia.tea.xyz" },
