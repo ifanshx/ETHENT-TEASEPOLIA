@@ -4,13 +4,14 @@ import {
   CubeTransparentIcon,
   PhotoIcon,
   SparklesIcon,
-  CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
+
 import { METADATA_TRAITS } from "@/constants/metadata";
 import { useToast } from "@/context/ToastContext";
-import { PinataSDK } from "pinata";
-import { useEffect, useState, useMemo, useCallback } from "react"; // Hapus useRef yang tidak digunakan
+// import { PinataSDK } from "pinata";
+import { useEffect, useState, useMemo, useRef } from "react";
 import {
+  BaseError,
   useAccount,
   useBalance,
   useReadContract,
@@ -20,45 +21,33 @@ import {
 import { parseEther } from "viem";
 import { mintNFTABI, mintNFTAddress } from "@/constants/ContractAbi";
 
-// Inisialisasi Pinata SDK dengan environment variables
-const pinata = new PinataSDK({
-  pinataJwt: process.env.NEXT_PUBLIC_PINATA_JWT,
-  pinataGateway: process.env.NEXT_PUBLIC_PINATA_GATEWAY,
-});
+// Inisialisasi Pinata SDK
+// const pinata = new PinataSDK({
+//   pinataJwt:
+//     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJhZGM4OGQ0OC0wMDg4LTRjMmMtOGIxMS01NjRkODQxZTMwYzAiLCJlbWFpbCI6ImlyZmFhbnNob29kaXExOTU0QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiJmNjE4OTRkYzRiNTM3Y2VlZjg4YyIsInNjb3BlZEtleVNlY3JldCI6IjRjNjg1YTIxOWQwM2FiOTAwZWYyMGU1Y2I2MGZhMDRjMzdiODA0ZWE0NWViNDFhZDk1MjM0ZmRiNDkwMThiNjkiLCJleHAiOjE3Njk5NDEwOTZ9.kElikjPEK_-KCZom76QxOroAHEc-2jAmiqBRjrieZJk",
+//   pinataGateway: "https://red-equivalent-hawk-791.mypinata.cloud/",
+// });
 
-// Tipe yang lebih dinamis
-type TraitType = keyof typeof METADATA_TRAITS;
-type SelectedTraits = Record<TraitType, string>;
+// Definisi tipe untuk trait
+type TraitType =
+  | "Background"
+  | "Speciality"
+  | "Skin"
+  | "Clothes"
+  | "Beard"
+  | "Head"
+  | "Eyes"
+  | "Mustache"
+  | "Nose"
+  | "Coin"
+  | "Hands";
 
-const LAYER_ORDER: TraitType[] = [
-  "Background",
-  "Speciality",
-  "Skin",
-  "Clothes",
-  "Beard",
-  "Head",
-  "Eyes",
-  "Mustache",
-  "Nose",
-  "Coin",
-  "Hands",
-];
-
-const getOrderedTraits = () => {
-  const ordered = LAYER_ORDER.filter((trait) => trait in METADATA_TRAITS);
-  const remaining = Object.keys(METADATA_TRAITS).filter(
-    (trait) => !LAYER_ORDER.includes(trait as TraitType)
-  );
-  return [...ordered, ...remaining] as TraitType[];
+type SelectedTraits = {
+  [key in TraitType]: string;
 };
 
 const GenerateImagePage = () => {
-  const traits = getOrderedTraits(); // Gunakan fungsi ordering
-
-  const { showToast } = useToast();
-  const { isConnected, address } = useAccount();
-
-  const LAYER_ORDER: TraitType[] = [
+  const traits: TraitType[] = [
     "Background",
     "Speciality",
     "Skin",
@@ -72,298 +61,468 @@ const GenerateImagePage = () => {
     "Hands",
   ];
 
-  // Tambahkan type guard
-  type TraitType =
-    | (keyof typeof METADATA_TRAITS & "Background")
-    | "Speciality"
-    | "Skin"
-    | "Clothes"
-    | "Beard"
-    | "Head"
-    | "Eyes"
-    | "Mustache"
-    | "Nose"
-    | "Coin"
-    | "Hands";
+  const { showToast } = useToast();
+  const { isConnected, address } = useAccount();
 
-  // State management
-  const [activeTrait, setActiveTrait] = useState<TraitType>("Background");
-  const [selectedTraits, setSelectedTraits] = useState<SelectedTraits>(
-    traits.reduce(
-      (acc, trait) => ({ ...acc, [trait]: "" }),
-      {} as SelectedTraits
-    )
-  );
-  const [isUploading, setIsUploading] = useState(false);
-  const [pendingFiles, setPendingFiles] = useState<string[]>([]);
+  // Mengambil saldo wallet menggunakan useBalance
+  const { data: balanceData } = useBalance({
+    address: address,
+  });
 
-  // Wallet and contract states
-  const { data: balance } = useBalance({ address });
+  // State untuk trait aktif, list trait, supply, dan status upload
+  const [activeTraits, setActiveTraits] = useState<TraitType>("Background");
+  const [listTraits, setListTraits] = useState<string[]>([]);
+  const [maxSupply, setMaxSupply] = useState<number | null>(null);
+  const [totalSupply, setTotalSupply] = useState<number | null>(null);
+  const [selectedTraits, setSelectedTraits] = useState<SelectedTraits>({
+    Background: "",
+    Speciality: "",
+    Skin: "",
+    Clothes: "",
+    Beard: "",
+    Head: "",
+    Eyes: "",
+    Mustache: "",
+    Nose: "",
+    Coin: "",
+    Hands: "",
+  });
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+
+  // Membersihkan localStorage saat mount (jika diperlukan)
+  useEffect(() => {
+    localStorage.clear();
+  }, []);
+
+  // Update listTraits berdasarkan trait aktif
+  useEffect(() => {
+    const defaultTraits = METADATA_TRAITS[activeTraits] || [];
+    setListTraits([...defaultTraits]);
+  }, [activeTraits]);
+
+  // Fungsi untuk memilih trait secara acak untuk setiap kategori
+  const handleRandomTraits = (): void => {
+    const randomSelection: Partial<SelectedTraits> = {};
+    traits.forEach((trait) => {
+      const options = METADATA_TRAITS[trait] as string[] | undefined;
+      if (options && options.length > 0) {
+        const randomIndex = Math.floor(Math.random() * options.length);
+        randomSelection[trait] = options[randomIndex];
+      } else {
+        console.warn(`No available options for trait: ${trait}`);
+        randomSelection[trait] = "";
+      }
+    });
+    setSelectedTraits(randomSelection as SelectedTraits);
+  };
+
+  // Fungsi untuk memilih atau membatalkan pilihan trait pada kategori aktif
+  const handleSelectTrait = (item: string): void => {
+    setSelectedTraits((prev) => ({
+      ...prev,
+      [activeTraits]:
+        prev[activeTraits] === item
+          ? activeTraits === "Background"
+            ? item
+            : ""
+          : item,
+    }));
+  };
+
+  // Wagmi hooks for contract interactions
   const {
     data: txHash,
     error: txError,
-    isPending: isMintPending,
+    isPending,
     writeContract,
   } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash: txHash,
-    });
+    useWaitForTransactionReceipt({ hash: txHash });
 
-  // Contract data
-  const { data: maxSupply } = useReadContract({
+  // Use refs to track previous transaction states to avoid duplicate toast notifications
+  const prevIsConfirming = useRef<boolean>(false);
+  const prevIsConfirmed = useRef<boolean>(false);
+  const prevTxError = useRef<BaseError | Error | null>(null);
+
+  // const [imageFileId, setImageFileId] = useState<string | null>(null);
+  // const [metadataFileId, setMetadataFileId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isConfirming && !prevIsConfirming.current) {
+      showToast("Transaction is being confirmed...", "info");
+    }
+    prevIsConfirming.current = isConfirming;
+
+    if (isConfirmed && !prevIsConfirmed.current) {
+      showToast("NFT Minted Successfully!", "success");
+    }
+    prevIsConfirmed.current = isConfirmed;
+
+    if (txError && txError !== prevTxError.current) {
+      const errorMessage =
+        txError instanceof BaseError
+          ? txError.shortMessage || txError.message
+          : "Transaction Failed";
+      showToast(errorMessage, "error");
+      // 🔥 Hapus file dari Pinata jika transaksi gagal
+      // (async () => {
+      //   if (imageFileId) {
+      //     try {
+      //       await pinata.files.public.delete([imageFileId]);
+      //       console.log(
+      //         `File with ID ${imageFileId} deleted due to transaction failure.`
+      //       );
+      //     } catch (deleteError) {
+      //       console.error(
+      //         `Failed to delete image with ID ${imageFileId}:`,
+      //         deleteError
+      //       );
+      //     }
+      //   }
+
+      //   if (metadataFileId) {
+      //     try {
+      //       await pinata.files.public.delete([metadataFileId]);
+      //       console.log(
+      //         `File with ID ${metadataFileId} deleted due to transaction failure.`
+      //       );
+      //     } catch (deleteError) {
+      //       console.error(
+      //         `Failed to delete metadata with ID ${metadataFileId}:`,
+      //         deleteError
+      //       );
+      //     }
+      //   }
+      // })
+      // ();
+
+      prevTxError.current = txError;
+    }
+  }, [
+    isConfirming,
+    isConfirmed,
+    txError,
+    // imageFileId,
+    // metadataFileId,
+    showToast,
+  ]);
+
+  // Read contract values for maxSupply and totalSupply
+  const { data: maxSupplyData } = useReadContract({
     address: mintNFTAddress,
     abi: mintNFTABI,
     functionName: "MAX_SUPPLY",
   });
 
-  const { data: totalSupply } = useReadContract({
+  const { data: totalSupplyData } = useReadContract({
     address: mintNFTAddress,
     abi: mintNFTABI,
     functionName: "totalSupply",
   });
 
+  useEffect(() => {
+    if (maxSupplyData) setMaxSupply(Number(maxSupplyData));
+    if (totalSupplyData) setTotalSupply(Number(totalSupplyData));
+  }, [maxSupplyData, totalSupplyData]);
+
+  // Read the minted NFT count for the connected user
   const { data: mintedCount } = useReadContract({
     address: mintNFTAddress,
     abi: mintNFTABI,
-    functionName: "totalMinted",
+    functionName: "userBalance",
+    args: [address || "0x0000000000000000000000000000000000000000"],
   });
 
-  // Cleanup effect
-  useEffect(() => {
-    const cleanup = async () => {
-      if (pendingFiles.length > 0) {
-        await pinata.files.public.delete(pendingFiles);
-        setPendingFiles([]);
-      }
-    };
+  // Function to mint the NFT
+  // const handleMintNFT = async (): Promise<string | null> => {
+  //   if (!isConnected) {
+  //     showToast("Please connect your wallet first", "error");
+  //     return null;
+  //   }
 
-    return () => {
-      cleanup();
-    };
-  }, [pendingFiles]);
+  //   let imageCID: string | null = null;
+  //   let metadataCID: string | null = null;
+  //   let imageFileId: string | null = null;
+  //   let metadataFileId: string | null = null;
 
-  // Trait selection handlers
-  const handleRandomize = useCallback(() => {
-    const randomTraits = traits.reduce((acc, trait) => {
-      const options = METADATA_TRAITS[trait];
-      return {
-        ...acc,
-        [trait]: options[Math.floor(Math.random() * options.length)] || "",
-      };
-    }, {} as SelectedTraits);
-    setSelectedTraits(randomTraits);
-  }, [traits]);
+  //   try {
+  //     setIsUploading(true);
+  //     showToast("Uploading image...", "info");
 
-  const handleSelectTrait = useCallback(
-    (trait: string) => {
-      setSelectedTraits((prev) => ({
-        ...prev,
-        [activeTrait]: prev[activeTrait] === trait ? "" : trait,
-      }));
-    },
-    [activeTrait]
-  );
+  //     // Nama dan deskripsi NFT
+  //     const nftName = "Ethereal Entities";
+  //     const nftDescription =
+  //       "Ethereal Entities is an NFT collection featuring mystical creatures from another world.";
 
-  // Image composition logic
-  const composeImage = useCallback(async (selectedTraits: SelectedTraits) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 512;
-    canvas.height = 512;
-    const ctx = canvas.getContext("2d");
+  //     // 🔥 1. Optimalkan ukuran canvas
+  //     const canvas = document.createElement("canvas");
+  //     const ctx = canvas.getContext("2d");
+  //     if (!ctx) throw new Error("Could not get canvas context");
 
-    if (!ctx) throw new Error("Failed to get canvas context");
+  //     canvas.width = 150; // 🔥 Ukuran lebih kecil agar file tidak besar
+  //     canvas.height = 150;
 
-    // Urutkan berdasarkan LAYER_ORDER terlepas dari struktur folder
-    for (const trait of LAYER_ORDER) {
-      const asset = selectedTraits[trait];
-      if (!asset) continue;
+  //     // Fungsi untuk load dan menggambar trait pada canvas
+  //     const loadImage = async (trait: TraitType): Promise<void> => {
+  //       if (!selectedTraits[trait]) return;
+  //       return new Promise<void>((resolve, reject) => {
+  //         const img = new Image();
+  //         img.onload = () => {
+  //           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  //           resolve();
+  //         };
+  //         img.onerror = () =>
+  //           reject(new Error(`Failed to load image for trait ${trait}`));
 
-      await new Promise<void>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-          // Handle berbagai ukuran gambar
-          const x = (canvas.width - img.width) / 2;
-          const y = (canvas.height - img.height) / 2;
-          ctx.drawImage(img, x, y, img.width, img.height);
-          resolve();
-        };
-        img.onerror = reject;
-        img.src = `/assets/${trait}/${asset}`; // Path tetap sesuai nama trait
-      });
-    }
+  //         if (selectedTraits[trait].startsWith("custom-")) {
+  //           const dataUrl = localStorage.getItem(selectedTraits[trait]);
+  //           img.src = dataUrl || "";
+  //         } else {
+  //           img.src = `/assets/${trait}/${selectedTraits[trait]}`;
+  //         }
+  //       });
+  //     };
 
-    return canvas.toDataURL("image/webp", 0.9);
-  }, []);
+  //     await Promise.all(traits.map((trait) => loadImage(trait)));
 
-  // Minting logic
-  const handleMint = useCallback(async () => {
-    if (!isConnected || !address) {
-      showToast("Please connect wallet first", "error");
-      return;
-    }
+  //     // 🔥 2. Simpan ke WEBP (lebih kecil)
+  //     const blob = await new Promise<Blob>((resolve, reject) =>
+  //       canvas.toBlob(
+  //         (b) =>
+  //           b ? resolve(b) : reject(new Error("Failed to create WEBP blob")),
+  //         "image/webp",
+  //         0.8
+  //       )
+  //     );
 
-    // Validasi 2: Balance cukup
-    if ((balance?.value ?? BigInt(0)) < parseEther("2")) {
-      showToast("Insufficient balance", "error");
-      return;
+  //     // Upload ke IPFS (Pinata)
+  //     const imageFile = new File([blob], `${nftName}.webp`, {
+  //       type: "image/webp",
+  //     });
+  //     const imageUploadResponse = await pinata.upload.public.file(imageFile);
+  //     imageFileId = imageUploadResponse.id; // Simpan ID file gambar
+  //     setImageFileId(imageFileId); // Simpan imageFileId di state
+  //     imageCID = imageUploadResponse.cid; // Simpan CID gambar
+  //     const imageUrl = `https://red-equivalent-hawk-791.mypinata.cloud/ipfs/${imageCID}`;
+
+  //     showToast("Uploading metadata...", "info");
+
+  //     // Metadata NFT
+  //     const metadata = {
+  //       name: nftName,
+  //       description: nftDescription,
+  //       image: imageUrl,
+  //       attributes: traits.map((trait) => ({
+  //         trait_type: trait,
+  //         value: selectedTraits[trait] || "None",
+  //       })),
+  //     };
+
+  //     // Upload Metadata ke IPFS
+  //     const metadataFile = new File(
+  //       [JSON.stringify(metadata, null, 2)],
+  //       `${nftName}.json`,
+  //       { type: "application/json" }
+  //     );
+  //     const metadataUploadResponse = await pinata.upload.public.file(
+  //       metadataFile
+  //     );
+  //     metadataFileId = metadataUploadResponse.id; // Simpan ID file metadata
+  //     setMetadataFileId(metadataFileId); // Simpan metadataFileId di state
+  //     metadataCID = metadataUploadResponse.cid; // Simpan CID metadata
+
+  //     const metadataUri = `ipfs://${metadataCID}`;
+
+  //   setIsUploading(false);
+
+  //     // Mint NFT dengan metadata URI
+  //     writeContract({
+  //       address: mintNFTAddress,
+  //       abi: mintNFTABI,
+  //       functionName: "mint",
+  //       args: [BigInt(1), metadataUri],
+  //       value: parseEther("2"),
+  //     });
+
+  //     return "Minting successful";
+  //   } catch (error) {
+  //     showToast("Error during NFT minting", "error");
+  //     console.error(error);
+
+  //     try {
+  //       if (imageFileId) {
+  //         showToast("Deleting image from Pinata...", "info");
+  //         const deleteImageResponse = await pinata.files.public.delete([
+  //           imageFileId,
+  //         ]);
+
+  //         if (
+  //           deleteImageResponse.length > 0 &&
+  //           deleteImageResponse[0].status === "success"
+  //         ) {
+  //           console.log(`File with ID ${imageFileId} deleted successfully.`);
+  //           showToast("Image deleted from Pinata", "success");
+  //         } else {
+  //           console.error(
+  //             `Failed to delete image with ID ${imageFileId}:`,
+  //             deleteImageResponse
+  //           );
+  //           showToast("Failed to delete image from Pinata", "error");
+  //         }
+  //       }
+
+  //       if (metadataFileId) {
+  //         showToast("Deleting metadata from Pinata...", "info");
+  //         const deleteMetadataResponse = await pinata.files.public.delete([
+  //           metadataFileId,
+  //         ]);
+
+  //         if (
+  //           deleteMetadataResponse.length > 0 &&
+  //           deleteMetadataResponse[0].status === "success"
+  //         ) {
+  //           console.log(`File with ID ${metadataFileId} deleted successfully.`);
+  //           showToast("Metadata deleted from Pinata", "success");
+  //         } else {
+  //           console.error(
+  //             `Failed to delete metadata with ID ${metadataFileId}:`,
+  //             deleteMetadataResponse
+  //           );
+  //           showToast("Failed to delete metadata from Pinata", "error");
+  //         }
+  //       }
+  //     } catch (deleteError) {
+  //       console.error("Error deleting file from Pinata:", deleteError);
+  //       showToast("Error deleting file from Pinata", "error");
+  //     }
+
+  //     setIsUploading(false);
+  //     return null;
+  //   }
+  // };
+
+  const handleMintNFT = async (): Promise<string | null> => {
+    if (!isConnected) {
+      showToast("Please connect your wallet first", "error");
+      return null;
     }
 
     try {
       setIsUploading(true);
+      showToast("Preparing NFT mint with fallback URIs...", "info");
 
-      const dataUrl = await composeImage(selectedTraits);
-      const blob = await fetch(dataUrl).then((r) => r.blob());
+      const metadataUri =
+        "https://red-equivalent-hawk-791.mypinata.cloud/ipfs/bafkreib6i5tbbaszc6d4ty7pizi3uhlkxkhuggzyiek3y3p4nhmqjgeli4";
 
-      const imageFile = new File([blob], "nft-image.webp");
-      const imageRes = await pinata.upload.public.file(imageFile);
-      setPendingFiles((prev) => [...prev, imageRes.id]);
+      // Jika diperlukan, kamu masih bisa melakukan pembuatan canvas untuk preview
+      // Namun, karena upload ke IPFS tidak diperlukan, kita lewati langkah tersebut
 
-      // Gunakan traits langsung dari METADATA_TRAITS
-      const metadata = {
-        name: "Ethereal Entity",
-        description: "Unique digital collectible",
-        image: `ipfs://${imageRes.cid}`,
-        attributes: LAYER_ORDER.map((trait) => ({
-          trait_type: trait,
-          value: selectedTraits[trait] || "None",
-        })),
-      };
+      setIsUploading(false);
 
-      const metadataFile = new File(
-        [JSON.stringify(metadata)],
-        "metadata.json",
-        { type: "application/json" }
-      );
-      const metadataRes = await pinata.upload.public.file(metadataFile);
-
-      setPendingFiles((prev) => [...prev, metadataRes.id]);
-
+      // Mint NFT menggunakan metadata URI fallback
       writeContract({
         address: mintNFTAddress,
         abi: mintNFTABI,
         functionName: "mint",
-        args: [`ipfs://${metadataRes.cid}`], // Hanya 1 parameter
-        value: parseEther("2"), // Sesuaikan dengan mintPrice di contract
+        args: [BigInt(1), metadataUri],
+        value: parseEther("2"),
       });
+
+      return "Minting successful";
     } catch (error) {
-      showToast("Minting failed", "error");
+      showToast("Error during NFT minting", "error");
       console.error(error);
-    } finally {
       setIsUploading(false);
+      return null;
     }
-  }, [
-    address,
-    balance?.value,
-    composeImage,
-    isConnected,
-    selectedTraits,
-    showToast,
-    writeContract,
-  ]);
+  };
 
-  const isLoading = isUploading || isMintPending || isConfirming;
+  // Membuat preview image berdasarkan trait yang telah dipilih
+  const previewImage = useMemo(() => {
+    return traits
+      .map((trait) => {
+        if (!selectedTraits[trait]) return null;
+        return selectedTraits[trait].startsWith("custom-")
+          ? localStorage.getItem(selectedTraits[trait]) || ""
+          : `/assets/${trait}/${selectedTraits[trait]}`;
+      })
+      .filter((src) => src !== null) as string[];
+  }, [selectedTraits, traits]);
 
-  // Transaction status handling
-  useEffect(() => {
-    if (isConfirmed) {
-      showToast("NFT minted successfully!", "success");
-      setPendingFiles([]);
-    }
-
-    if (txError) {
-      showToast(txError.message || "Transaction failed", "error");
-    }
-  }, [isConfirmed, txError, showToast]);
-
-  // Preview image
-  const previewImage = useMemo(
-    () =>
-      LAYER_ORDER.map((trait) => ({
-        trait,
-        asset: selectedTraits[trait],
-      }))
-        .filter(({ asset }) => asset)
-        .map(
-          ({ trait, asset }) => `/assets/${trait}/${asset}` // Path tetap berdasarkan nama trait
-        ),
-    [selectedTraits]
-  );
-
+  const stats = [
+    {
+      title: "Total Minted",
+      value: totalSupply,
+      icon: PhotoIcon,
+      color: "from-pink-400 to-purple-400",
+    },
+    {
+      title: "Max Supply",
+      value: maxSupply,
+      icon: PhotoIcon,
+      color: "from-blue-400 to-cyan-400",
+    },
+  ];
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
-      <div className="container mx-auto px-4 py-12 max-w-7xl">
-        {/* Header Section */}
-        <header className="text-center mb-16 space-y-6">
-          <div className="relative inline-block">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-500 rounded-xl blur-2xl opacity-30 animate-pulse" />
-            <h1 className="relative text-5xl md:text-6xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
-              Ethereal Entities
-            </h1>
-          </div>
-          <p className="text-lg text-gray-600 font-medium animate-fade-in">
-            Craft your unique digital masterpiece
-          </p>
-        </header>
+    <main className="container mx-auto px-4 py-10 md:py-20 max-w-7xl">
+      {/* Header Section */}
+      <header className="text-center mb-12 space-y-3">
+        <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+          Ethereal Entities
+        </h1>
+        <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+          Create your unique digital masterpiece with the NFT generator
+        </p>
+      </header>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 animate-slide-up">
-          <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-shadow duration-300">
+      {/* Stats Cards */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        {stats.map((stat) => (
+          <div
+            key={stat.title}
+            className="bg-white p-5 rounded-xl shadow-lg border border-gray-100 hover:shadow-md transition-all group"
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-2">Total Minted</p>
-                <p className="text-3xl font-bold text-gray-800">
-                  {totalSupply || 0}
-                  <span className="text-lg text-gray-500">/{maxSupply}</span>
-                </p>
+                <p className="text-sm text-gray-500 mb-1">{stat.title}</p>
+                <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
               </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <PhotoIcon className="w-6 h-6 text-purple-600" />
+              <div className="p-2.5 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg transform group-hover:rotate-12 transition-all">
+                <stat.icon className="w-6 h-6 text-purple-600" />
               </div>
             </div>
           </div>
+        ))}
+      </section>
 
-          <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-shadow duration-300">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 mb-2">Your Balance</p>
-                <p className="text-3xl font-bold text-gray-800">
-                  {balance?.formatted.slice(0, 7) || "0.00"} TEA
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <CurrencyDollarIcon className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-24">
-          {/* Trait Selector */}
-          <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-xl animate-slide-up">
-            <div className="p-4 space-y-4">
-              <div className="hidden md:flex flex-wrap justify-center  gap-2 mb-6">
-                {traits.map((trait) => (
+      {/* Main Content Grid */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Trait Selector Panel */}
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-200">
+          <div className="p-4 space-y-4">
+            {/* Navigation Tabs */}
+            <nav className="space-y-2">
+              <div className="hidden md:flex flex-wrap gap-2 justify-center p-1 bg-gray-50 rounded-xl">
+                {traits.map((item) => (
                   <button
-                    key={trait}
-                    onClick={() => setActiveTrait(trait)}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
-                      activeTrait === trait
+                    key={item}
+                    onClick={() => setActiveTraits(item)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      activeTraits === item
                         ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        : "text-gray-600 hover:bg-gray-100"
                     }`}
                   >
-                    {trait}
+                    {item}
                   </button>
                 ))}
               </div>
 
               {/* Mobile Select */}
-              <div className="md:hidden mb-6">
+              <div className="md:hidden">
                 <select
-                  value={activeTrait}
-                  onChange={(e) => setActiveTrait(e.target.value as TraitType)}
+                  value={activeTraits}
+                  onChange={(e) => setActiveTraits(e.target.value as TraitType)}
                   className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-700 focus:ring-2 focus:ring-purple-200"
                 >
                   {traits.map((item) => (
@@ -373,123 +532,128 @@ const GenerateImagePage = () => {
                   ))}
                 </select>
               </div>
-            </div>
-
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-              {METADATA_TRAITS[activeTrait].map((asset) => (
-                <button
-                  key={asset}
-                  onClick={() => handleSelectTrait(asset)}
-                  className={`group relative aspect-square overflow-hidden rounded-xl border-2 transition-all duration-300 ${
-                    selectedTraits[activeTrait] === asset
-                      ? "border-purple-500 scale-105 shadow-lg"
-                      : "border-gray-200 hover:border-purple-300"
-                  }`}
-                >
-                  <img
-                    src={`/assets/${activeTrait}/${asset}`}
-                    alt=""
-                    className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-110"
-                  />
-
-                  {selectedTraits[activeTrait] === asset && (
-                    <div className="absolute inset-0 bg-purple-500/20 flex items-center justify-center">
-                      <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center animate-pop-in">
-                        <svg
-                          className="w-4 h-4 text-purple-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Preview Panel */}
-          <div className="sticky top-6 bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-xl animate-slide-up">
-            <div className="aspect-square bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden">
-              {previewImage.length > 0 ? (
-                previewImage.map((src, i) => (
-                  <img
-                    key={i}
-                    src={src}
-                    alt="NFT Preview"
-                    className="absolute inset-0 w-full h-full object-contain p-4 animate-fade-in"
-                    style={{
-                      zIndex: i,
-                      animationDelay: `${i * 0.1}s`,
-                    }}
-                  />
-                ))
-              ) : (
-                <div className="text-center space-y-4 animate-fade-in">
-                  <div className="inline-block p-4 bg-gradient-to-r from-purple-600 to-pink-500 rounded-2xl shadow-lg animate-float">
-                    <SparklesIcon className="w-12 h-12 text-white" />
-                  </div>
-                  <p className="text-gray-500 font-medium">
-                    Combine traits to begin creation
-                  </p>
+            </nav>
+            {/* Traits Grid */}
+            <div className="bg-gray-50  rounded-xl border border-gray-200 overflow-hidden">
+              <div className="h-[450px] overflow-y-auto p-3 custom-scrollbar">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                  {listTraits.map((item) => (
+                    <button
+                      key={`${activeTraits}-${item}`}
+                      onClick={() => handleSelectTrait(item)}
+                      className={`aspect-square relative overflow-hidden rounded-lg border-2 transition-all group ${
+                        selectedTraits[activeTraits] === item
+                          ? "border-purple-500 shadow-xl"
+                          : "border-gray-200 hover:border-purple-300"
+                      }`}
+                    >
+                      {selectedTraits[activeTraits] === item && (
+                        <div className="absolute top-2 right-2 bg-purple-500 p-1.5 rounded-full shadow-sm z-10">
+                          <div className="w-2 h-2 bg-white rounded-full" />
+                        </div>
+                      )}
+                      <img
+                        src={
+                          item.startsWith("custom-")
+                            ? localStorage.getItem(item) || ""
+                            : `/assets/${activeTraits}/${item}`
+                        }
+                        alt="Trait"
+                        className="w-full h-full object-cover transform transition duration-300 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Mint Controls */}
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4">
-          <div className="bg-white/90 backdrop-blur-xl rounded-xl p-4 border border-white/20 shadow-2xl flex gap-4 animate-slide-up">
-            <button
-              onClick={handleRandomize}
-              className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-600 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md"
-            >
-              <CubeTransparentIcon className="w-5 h-5 text-purple-600" />
-              <span className="font-medium">Randomize</span>
-            </button>
-
-            <button
-              onClick={handleMint}
-              disabled={!isConnected || isLoading || !previewImage.length}
-              className={`flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-lg transition-all duration-300 ${
-                isLoading
-                  ? "bg-purple-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-purple-600 to-pink-500 hover:shadow-lg"
-              } text-white font-medium relative overflow-hidden`}
-            >
-              {isLoading && (
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-500/20 animate-shimmer" />
-              )}
-
-              <div className="relative flex items-center gap-2">
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin w-5 h-5 border-2 border-current rounded-full border-t-transparent" />
-                    {isConfirming ? "Confirming..." : "Minting..."}
-                  </>
-                ) : (
-                  <>
-                    <SparklesIcon className="w-5 h-5 text-amber-200" />
-                    Mint NFT
-                    <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
-                      {mintedCount?.toString() || 0}/20
-                    </span>
-                  </>
-                )}
+        {/* Preview Panel */}
+        <section className="sticky top-6 h-fit bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="aspect-square bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden">
+            {traits.some((t) => selectedTraits[t]) ? (
+              traits.map(
+                (trait) =>
+                  selectedTraits[trait] && (
+                    <img
+                      key={trait}
+                      src={
+                        selectedTraits[trait].startsWith("custom-")
+                          ? localStorage.getItem(selectedTraits[trait]) || ""
+                          : `/assets/${trait}/${selectedTraits[trait]}`
+                      }
+                      alt={trait}
+                      className="absolute inset-0 object-contain w-full h-full p-4 animate-float"
+                    />
+                  )
+              )
+            ) : (
+              <div className="text-center p-6">
+                <div className="mb-4 mx-auto w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center animate-pulse">
+                  <SparklesIcon className="w-8 h-8 text-purple-500" />
+                </div>
+                <p className="text-gray-600 text-sm">
+                  Combine traits to preview your NFT masterpiece
+                </p>
               </div>
-            </button>
+            )}
           </div>
-        </div>
+        </section>
       </div>
+
+      {/* Floating Action Bar */}
+      <footer className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-xl border border-gray-200 max-w-2xl w-[95%] backdrop-blur-sm">
+        <div className="p-3 flex items-center justify-between gap-4">
+          <button
+            onClick={handleRandomTraits}
+            className="px-5 py-2.5 flex items-center gap-2 text-purple-600 hover:bg-purple-50 rounded-xl transition-all"
+          >
+            <CubeTransparentIcon className="w-5 h-5 text-purple-500 animate-dance" />
+            <span className="text-sm font-semibold">Randomize</span>
+          </button>
+
+          <button
+            onClick={handleMintNFT}
+            disabled={
+              !isConnected ||
+              !previewImage.length ||
+              (mintedCount !== undefined && Number(mintedCount) >= 20) ||
+              isPending ||
+              isUploading ||
+              (balanceData && balanceData.value < parseEther("2"))
+            }
+            className={`px-6 py-3 flex items-center gap-2 rounded-xl transition-all ${
+              !isConnected ||
+              !previewImage.length ||
+              (mintedCount && Number(mintedCount) >= 20) ||
+              isPending ||
+              isUploading ||
+              (balanceData && balanceData.value < parseEther("2"))
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:shadow-lg"
+            }`}
+          >
+            {isUploading || isPending ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm font-semibold">
+                  {isUploading ? "Uploading..." : "Minting..."}
+                </span>
+              </>
+            ) : (
+              <>
+                <SparklesIcon className="w-5 h-5 text-amber-200" />
+                <span className="text-sm font-semibold">Mint NFT</span>
+                <span className="text-xs bg-white/10 px-2 py-1 rounded-full">
+                  {mintedCount}/20 left
+                </span>
+              </>
+            )}
+          </button>
+        </div>
+      </footer>
     </main>
   );
 };
