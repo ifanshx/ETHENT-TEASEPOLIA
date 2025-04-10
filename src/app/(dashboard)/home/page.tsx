@@ -1,17 +1,17 @@
 "use client";
 
+import { ZephyrusABI, ZephyrusAddress } from "@/constants/ZephyrusAbi";
 import { CurrencyDollarIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { useAccount, useBalance, useReadContract } from "wagmi";
-import { mintNFTABI, mintNFTAddress } from "@/constants/ContractAbi";
 
 const HomePage = () => {
   const { address, isConnected } = useAccount();
 
   // Get user's NFT balance
   const { data: mintedCount } = useReadContract({
-    address: mintNFTAddress,
-    abi: mintNFTABI,
-    functionName: "totalMinted",
+    address: ZephyrusAddress,
+    abi: ZephyrusABI,
+    functionName: "balanceOf",
   });
 
   // Get native token balance
@@ -31,7 +31,7 @@ const HomePage = () => {
     },
     {
       title: "Your Entities",
-      value: mintedCount?.toString() || "0",
+      value: mintedCount,
       icon: PhotoIcon,
       color: "from-blue-500 to-cyan-500",
     },
