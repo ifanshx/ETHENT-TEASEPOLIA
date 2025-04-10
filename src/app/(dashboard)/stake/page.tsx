@@ -347,9 +347,12 @@ const StakePage = () => {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-12 animate-fade-in">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
-            NFT Staking Platform
-          </h1>
+          <div className="relative inline-block">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-500 rounded-xl blur-2xl opacity-30 animate-pulse" />
+            <h1 className="relative text-5xl md:text-6xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+              NFT Staking Platfrom
+            </h1>
+          </div>
           <p className="text-gray-600 text-lg">
             Stake your NFTs to earn rewards
           </p>

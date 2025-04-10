@@ -467,9 +467,12 @@ const GenerateImagePage = () => {
     <main className="container mx-auto px-4 py-10 md:py-20 max-w-7xl">
       {/* Header Section */}
       <header className="text-center mb-12 space-y-3">
-        <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
-          Ethereal Entities
-        </h1>
+        <div className="relative inline-block">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-500 rounded-xl blur-2xl opacity-30 animate-pulse" />
+          <h1 className="relative text-5xl md:text-6xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+            Ethereal Entities
+          </h1>
+        </div>
         <p className="text-gray-600 text-lg max-w-2xl mx-auto">
           Create your unique digital masterpiece with the NFT generator
         </p>
@@ -480,11 +483,11 @@ const GenerateImagePage = () => {
         {stats.map((stat) => (
           <div
             key={stat.title}
-            className="bg-white p-5 rounded-xl shadow-lg border border-gray-100 hover:shadow-md transition-all group"
+            className="bg-white p-2 rounded-xl shadow-lg border border-gray-100 hover:shadow-md transition-all group"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-1">{stat.title}</p>
+                <p className="text-sm text-gray-500 ">{stat.title}</p>
                 <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
               </div>
               <div className="p-2.5 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg transform group-hover:rotate-12 transition-all">

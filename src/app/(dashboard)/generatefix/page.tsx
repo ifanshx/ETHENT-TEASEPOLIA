@@ -215,10 +215,21 @@ const GenerateImagePage = () => {
       const dataUrl = await composeImage(selectedTraits);
       const blob = await fetch(dataUrl).then((r) => r.blob());
 
-      const imageFile = new File([blob], "nft-image.webp");
+      // Generate unique filename dengan kombinasi timestamp dan address
+      const timestamp = Date.now();
+      const addressPrefix = address
+        ? `${address.slice(2, 6)}_${address.slice(-4)}`
+        : "anonymous";
+      const imageFilename = `EE_${addressPrefix}_${timestamp}_image.webp`;
+
+      const imageFile = new File([blob], imageFilename, {
+        type: "image/webp",
+        lastModified: timestamp,
+      });
       const imageRes = await pinata.upload.public.file(imageFile);
       setPendingFiles((prev) => [...prev, imageRes.id]);
 
+      const metadataFilename = `EE_${addressPrefix}_${timestamp}_metadata.json`;
       // Gunakan traits langsung dari METADATA_TRAITS
       const metadata = {
         name: "Ethereal Entity",
@@ -232,9 +243,10 @@ const GenerateImagePage = () => {
 
       const metadataFile = new File(
         [JSON.stringify(metadata)],
-        "metadata.json",
+        metadataFilename,
         { type: "application/json" }
       );
+
       const metadataRes = await pinata.upload.public.file(metadataFile);
 
       setPendingFiles((prev) => [...prev, metadataRes.id]);
