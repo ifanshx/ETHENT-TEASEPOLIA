@@ -119,7 +119,7 @@ const StakePage = () => {
         id: tokenId.toString(),
         tokenId: Number(tokenId),
         image: `/assets/rabbits.png`,
-        name: `Ethereal #${Number(tokenId)}`,
+        name: `Zephyrus #${Number(tokenId)}`,
         isStaked: true,
         claimableReward, // Tambahkan claimable reward
       })),
