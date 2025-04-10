@@ -28,7 +28,7 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    router.push("/zephyrus");
+    router.push("/home");
   }, [router]);
 
   return <Loading />;
