@@ -1,6 +1,6 @@
 // components/Loading.tsx
 
-export default function Loading() {
+export default function LoadingSekleton() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50 p-4">
       <div className="text-center space-y-6">
@@ -21,7 +21,7 @@ export default function Loading() {
             Preparing Magic...
           </p>
           <p className="text-sm text-pink-400/80">
-            Just a moment with our unicorns...
+            Just a moment with our entities...
           </p>
         </div>
       </div>

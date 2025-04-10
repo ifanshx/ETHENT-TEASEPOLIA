@@ -3,7 +3,7 @@
 import Sidebar from "@/components/Sidebar";
 import ConnectWallet from "@/components/ConnectWallet"; // boleh kamu aktifkan kembali
 import React, { Suspense } from "react";
-import DashboardLoading from "./loading";
+import Loading from "./loading";
 
 export default function DashboardLayout({
   children,
@@ -16,7 +16,7 @@ export default function DashboardLayout({
       <ConnectWallet /> {/* ✅ Sudah sesuai, bisa diaktifkan */}
       <main className="md:ml-64 p-6 lg:p-8 py-20">
         {" "}
-        <Suspense fallback={<DashboardLoading />}>
+        <Suspense fallback={<Loading />}>
           <div className="max-w-7xl mx-auto">{children}</div>
         </Suspense>
       </main>

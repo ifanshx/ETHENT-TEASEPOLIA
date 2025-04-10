@@ -24,7 +24,8 @@ const Sidebar = () => {
   const navItems = [
     { name: "Home", path: "/home", icon: HomeIcon },
     { name: "Stake", path: "/stake", icon: LockClosedIcon },
-    { name: "Generate", path: "/generate", icon: SparklesIcon },
+    // { name: "Generate", path: "/generate", icon: SparklesIcon },
+    { name: "Zephyrus", path: "/zephyrus", icon: SparklesIcon },
     { name: "Gallery", path: "/gallery", icon: PhotoIcon },
   ];
 

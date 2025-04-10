@@ -1,5 +1,5 @@
-import Loading from "@/components/Loading";
+import LoadingSekleton from "@/components/LoadingSekleton";
 
-export default function DashboardLoading() {
-  return <Loading />;
+export default function Loading() {
+  return <LoadingSekleton />;
 }

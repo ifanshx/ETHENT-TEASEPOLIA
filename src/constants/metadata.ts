@@ -1,5 +1,15 @@
 interface MetadataTraits {
-  [key: string]: string[];
+  Background: string[];
+  Speciality: string[];
+  Skin: string[];
+  Clothes: string[];
+  Beard: string[];
+  Head: string[];
+  Eyes: string[];
+  Mustache: string[];
+  Nose: string[];
+  Coin: string[];
+  Hands: string[];
 }
 
 const METADATA_TRAITS: MetadataTraits = {
@@ -295,7 +305,6 @@ const METADATA_TRAITS: MetadataTraits = {
     "zl.png",
     "zm.png",
   ],
-  Tier: ["Bronze.png", "Gold.png", "Silver.png"],
 };
 
 export { METADATA_TRAITS };
