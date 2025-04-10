@@ -1,8 +1,7 @@
-// StakeCard.tsx
 "use client";
 
-import { SparklesIcon } from "@heroicons/react/24/outline";
 import { useState, useRef, CSSProperties } from "react";
+import { formatEther } from "viem";
 
 interface StakeCardProps {
   nft: {
@@ -11,6 +10,8 @@ interface StakeCardProps {
     image: string;
     name: string;
     isStaked: boolean;
+    claimableReward?: bigint; // Tambah properti reward
+    dailyReward?: number; // Tambah properti reward harian
   };
   isSelected: boolean;
   onSelect: () => void;
@@ -19,6 +20,12 @@ interface StakeCardProps {
 const StakeCard = ({ nft, isSelected, onSelect }: StakeCardProps) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Format reward
+  const formatReward = (reward?: bigint) => {
+    if (!reward) return "0.00";
+    return parseFloat(formatEther(reward)).toFixed(5);
+  };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
@@ -44,7 +51,7 @@ const StakeCard = ({ nft, isSelected, onSelect }: StakeCardProps) => {
       onMouseLeave={() => setMousePosition({ x: 0, y: 0 })}
       className={`relative cursor-pointer group overflow-hidden rounded-2xl border-2
         ${isSelected ? "border-purple-400" : "border-purple-400/20"}
-        ${nft.isStaked ? "opacity-75" : "hover:border-purple-400/40"}`}
+        ${nft.isStaked ? "opacity-100" : "hover:border-purple-400/40"}`}
       style={cardStyle}
     >
       <div className="relative aspect-square">
@@ -63,9 +70,16 @@ const StakeCard = ({ nft, isSelected, onSelect }: StakeCardProps) => {
       </div>
 
       {nft.isStaked && (
-        <div className="absolute top-2 right-2 bg-purple-500/80 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
-          <SparklesIcon className="w-3 h-3" />
-          <span>Staked</span>
+        <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+          <div className="bg-purple-500/80 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[10px] leading-tight sm:text-xs flex items-center gap-1 flex-wrap">
+            <span className="inline-flex items-center">
+              <span className="xs:hidden">⚡</span>
+              <span className="hidden sm:inline">Earning</span>
+            </span>
+            <span className="bg-emerald-400/20 text-emerald-300 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+              +{formatReward(nft.claimableReward)}
+            </span>
+          </div>
         </div>
       )}
 
