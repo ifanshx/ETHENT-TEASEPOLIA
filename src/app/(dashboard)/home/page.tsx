@@ -12,6 +12,7 @@ const HomePage = () => {
     address: ZephyrusAddress,
     abi: ZephyrusABI,
     functionName: "balanceOf",
+    args: [address || "0x0000000000000000000000000000000000000000"],
   });
 
   // Get native token balance
