@@ -1,8 +1,20 @@
 "use client";
 
-import { ZephyrusABI, ZephyrusAddress } from "@/constants/ZephyrusAbi";
+import {
+  StakeZephyrABI,
+  StakeZephyrAddress,
+  ZephyrusABI,
+  ZephyrusAddress,
+} from "@/constants/ZephyrusAbi";
 import { CurrencyDollarIcon, PhotoIcon } from "@heroicons/react/24/outline";
-import { useAccount, useBalance, useReadContract } from "wagmi";
+import { useMemo } from "react";
+import { formatEther } from "viem";
+import {
+  useAccount,
+  useBalance,
+  useReadContract,
+  useReadContracts,
+} from "wagmi";
 
 const HomePage = () => {
   const { address, isConnected } = useAccount();
@@ -19,6 +31,34 @@ const HomePage = () => {
   const { data: balanceData } = useBalance({
     address: address,
   });
+
+  const { data: stakedResults } = useReadContracts({
+    contracts: [
+      {
+        address: StakeZephyrAddress,
+        abi: StakeZephyrABI,
+        functionName: "getStakeInfo",
+        args: [address ?? "0x0000000000000000000000000000000000000000"],
+      },
+    ],
+  });
+
+  type StakeInfoOutput = {
+    tokenId: bigint;
+    startTime: bigint;
+    claimableReward: bigint;
+  };
+
+  const totalRewards = useMemo(() => {
+    if (!stakedResults || !stakedResults[0]?.result) return "0.00";
+
+    const stakes = stakedResults[0].result as StakeInfoOutput[];
+    return stakes
+      .reduce((acc, stake) => {
+        return acc + parseFloat(formatEther(stake.claimableReward));
+      }, 0)
+      .toFixed(7);
+  }, [stakedResults]);
 
   // Stats configuration
   const stats = [
@@ -38,7 +78,7 @@ const HomePage = () => {
     },
     {
       title: "Staked Rewards",
-      value: "0.00 TEA",
+      value: `${totalRewards} TEA`, // Gunakan nilai yang sudah dihitung
       icon: CurrencyDollarIcon,
       color: "from-emerald-500 to-green-500",
     },
