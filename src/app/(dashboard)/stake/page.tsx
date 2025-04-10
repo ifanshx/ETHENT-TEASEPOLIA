@@ -290,6 +290,8 @@ const StakePage = () => {
                 <ArrowPathIcon className="w-6 h-6 text-purple-600" />
                 {activeTab === "owned" ? "Stake Options" : "Unstake"}
               </h3>
+
+              {/* Tombol Approve - hanya tampil jika belum approve */}
               {activeTab === "owned" && !isApproved && (
                 <button
                   onClick={handleApprove}
@@ -303,19 +305,24 @@ const StakePage = () => {
                   )}
                 </button>
               )}
-              <button
-                onClick={activeTab === "owned" ? handleStake : handleUnstake}
-                disabled={!selectedNFTs.length || isPending}
-                className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50"
-              >
-                {isPending ? (
-                  <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" />
-                ) : activeTab === "owned" ? (
-                  "Stake Selected"
-                ) : (
-                  "Unstake Selected"
-                )}
-              </button>
+
+              {/* Tombol Stake/Unstake - hanya tampil jika approved atau di tab staked */}
+              {(activeTab === "staked" ||
+                (activeTab === "owned" && isApproved)) && (
+                <button
+                  onClick={activeTab === "owned" ? handleStake : handleUnstake}
+                  disabled={!selectedNFTs.length || isPending}
+                  className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50"
+                >
+                  {isPending ? (
+                    <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" />
+                  ) : activeTab === "owned" ? (
+                    "Stake Selected"
+                  ) : (
+                    "Unstake Selected"
+                  )}
+                </button>
+              )}
             </div>
 
             <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 animate-slide-up delay-200">
